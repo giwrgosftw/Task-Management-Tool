@@ -1,11 +1,11 @@
 import os
 import webbrowser
 
-from flask import Flask, render_template, request, g
+from flask import Flask, render_template, request, g, Blueprint
 from threading import Timer
 from forms.project_form import ProjectForm
 from models.project import Project, db_session
-
+from models.models import mongoDB
 app = Flask(__name__)
 
 
@@ -53,6 +53,14 @@ def new_project():
         success = True
 
 
+@app.route("/test")
+def test():
+    user_collection = mongoDB.db.users
+    user_collection.insert({'name': 'peter', 'password': '12345'})
+    user_collection.insert({'name': 'richard', 'password': '12345'})
+    return '<H1>Connected to the data base!</H1>'
+
+
 # https://flask-restless.readthedocs.io/en/latest/processors.html
 @app.before_request
 def before_req():
@@ -76,6 +84,6 @@ def open_browser():
 if __name__ == "__main__":
     # db.create_all()
 
-    app.secret_key = os.urandom(24) # Keeps the client-side sessions secure by generating random key (output 24 bytes)
+    app.secret_key = os.urandom(24)  # Keeps the client-side sessions secure by generating random key (output 24 bytes)
     Timer(1, open_browser).start()  # Open the browser automatically in 1sec
     app.run()
