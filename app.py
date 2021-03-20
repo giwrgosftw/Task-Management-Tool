@@ -1,11 +1,13 @@
 import os
 import webbrowser
 
-from flask import Flask, render_template, request, g, Blueprint
+from flask import Flask, render_template, request, g, jsonify
 from threading import Timer
 from forms.project_form import ProjectForm
 from models.project import Project, db_session
-from models.models import mongoDB
+from models.models import mongoDB, create_app
+from models import settings
+
 app = Flask(__name__)
 
 
@@ -53,13 +55,57 @@ def new_project():
         success = True
 
 
-@app.route("/test")
+# https://www.geeksforgeeks.org/make-python-api-to-access-mongo-atlas-database/
+@app.route('/test')
 def test():
-    user_collection = mongoDB.db.users
-    user_collection.insert({'name': 'peter', 'password': '12345'})
-    user_collection.insert({'name': 'richard', 'password': '12345'})
-    return '<H1>Connected to the data base!</H1>'
+    # collections (aka tables) can be created on the third argument eg. tasks_table
+    addtask = settings.db.task_table.insert({"Task": "Add data", 'assigned': 'Patryk'})
+    return render_template('/test.html', addtask=addtask)
 
+
+@app.route('/insert-one/<name>/<id>/', methods=['GET'])
+def insertOne(name, id):
+    queryObject = {
+        'Name': name,
+        'ID': id
+    }
+    query = settings.db.task_table.insert_one(queryObject)
+    return "Query inserted...!!!"
+
+
+# To find all the entries/documents in a table/collection,
+# find() function is used. If you want to find all the documents
+# that matches a certain query, you can pass a queryObject as an
+# argument.
+@app.route('/find/', methods=['GET'])
+def findAll():
+    query = settings.db.task_table.find()
+    output = {}
+    i = 0
+    for x in query:
+        output[i] = x
+        output[i].pop('_id')
+        i += 1
+    return jsonify(output)
+
+
+# To update a document in a collection, update_one()
+# function is used. The queryObject to find the document is passed as
+# the first argument, the corresponding updateObject is passed as the
+# second argument under the '$set' index.
+@app.route('/update/<key>/<value>/<element>/<updateValue>/', methods=['GET'])
+def update(key, value, element, updateValue):
+    queryObject = {key: value}
+    updateObject = {element: updateValue}
+    query = settings.db.task_table.update_one(queryObject, {'$set': updateObject})
+    if query.acknowledged:
+        return "Update Successful"
+    else:
+        return "Update Unsuccessful"
+
+
+if __name__ == '__main__':
+    app.run(debug=True)
 
 # https://flask-restless.readthedocs.io/en/latest/processors.html
 @app.before_request

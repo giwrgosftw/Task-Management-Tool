@@ -4,6 +4,14 @@ from flask import Flask, jsonify, request, session, redirect
 mongoDB = PyMongo()
 
 
+def create_app(config_object='models.settings'):
+    app = Flask(__name__)
+
+    app.config.from_object(config_object)
+
+    mongoDB.init_app(app)
+
+
 class User():
     #
     def signup(self):
