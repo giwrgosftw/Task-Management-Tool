@@ -119,14 +119,15 @@ def after_req(resp):
     return resp
 
 
-# Open the browser automatically to the specific local port
-def open_browser():
-    webbrowser.open_new('http://127.0.0.1:5000/')
+def main():
+    # The reloader has not yet run - open the browser
+    if not os.environ.get("WERKZEUG_RUN_MAIN"):
+        webbrowser.open_new('http://127.0.0.1:5000/')
+
+    # Otherwise, continue as normal
+    app.secret_key = os.urandom(24)  # Keeps the client-side sessions secure by generating random key (output 24 bytes)
+    app.run(host="127.0.0.1", port=5000)
 
 
 if __name__ == "__main__":
-    # db.create_all()
-    # app.run(debug=True)
-    app.secret_key = os.urandom(24)  # Keeps the client-side sessions secure by generating random key (output 24 bytes)
-    Timer(1, open_browser).start()  # Open the browser automatically in 1sec
-    app.run()
+    main()
