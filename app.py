@@ -91,7 +91,7 @@ def new_project():
 @app.route('/test')
 def test():
     # collections (aka tables) can be created on the third argument eg. tasks_table
-    add_task = settings.db.task_table.insert({"Task": "Add data", 'assigned': 'Patryk'})
+    add_task = settings.db.task_table.insert_one({"Task": "Add data", 'assigned': 'Patryk'})
     return render_template('/test.html', addtask=add_task)
 
 
