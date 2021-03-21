@@ -151,6 +151,7 @@ def after_req(resp):
     return resp
 
 
+# https://stackoverflow.com/a/63216793
 def main():
     # The reloader has not yet run - open the browser
     if not os.environ.get("WERKZEUG_RUN_MAIN"):
