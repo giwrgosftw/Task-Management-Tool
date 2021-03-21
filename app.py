@@ -1,23 +1,56 @@
 import os
 import webbrowser
 
-from flask import Flask, render_template, request, g, jsonify
+from flask import Flask, render_template, request, g, jsonify, url_for, session, redirect
+
+from threading import Timer
 from forms.project_form import ProjectForm
 from models.project import Project, db_session
 from models.models import mongoDB, create_app
 from models import settings
+import bcrypt
 
 app = Flask(__name__)
+app.secret_key = "mysecret"
+app.debug = os.environ.get('DEBUG', True)
 
 
 @app.route('/')
-def login():
+def index():
+    if 'email' in session:
+        return 'You are logged in as ' + session['email']
+
     return render_template('login.html')
 
 
-@app.route('/register')
+@app.route('/login', methods=['POST'])
+def login():
+    users = settings.db.users
+    login_user = users.find_one({'email': request.form['email']})
+
+    if login_user:
+        if bcrypt.hashpw(request.form['password'].encode('utf-8'), login_user['password']) == login_user['password']:
+            session['email'] = request.form['email']
+            return redirect(url_for('index'))
+
+    return 'Invalid username or password'
+
+@app.route('/register', methods=['POST', 'GET'])
 def register():
+    if request.method == 'POST':
+        users = settings.db.users
+        existing_user = users.find_one({'name': request.form['email']})
+
+        if existing_user is None:
+            hashpass = bcrypt.hashpw(request.form['password'].encode('utf-8'), bcrypt.gensalt())
+            users.insert_one({'name': request.form['name'], 'surname': request.form['surname'], 'email': request.form['email'], 'password': hashpass})
+            session['email'] =  request.form['email']
+            return redirect(url_for('index'))
+
+        return 'That username already exists!'
+
     return render_template('register.html')
+
 
 
 @app.route('/password')
@@ -58,7 +91,7 @@ def new_project():
 @app.route('/test')
 def test():
     # collections (aka tables) can be created on the third argument eg. tasks_table
-    add_task = settings.db.task_table.insert_one({"Task": "Add data", 'assigned': 'Patryk'})
+    add_task = settings.db.task_table.insert({"Task": "Add data", 'assigned': 'Patryk'})
     return render_template('/test.html', addtask=add_task)
 
 
