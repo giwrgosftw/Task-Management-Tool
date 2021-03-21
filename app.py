@@ -35,6 +35,7 @@ def login():
 
     return 'Invalid username or password'
 
+
 @app.route('/register', methods=['POST', 'GET'])
 def register():
     if request.method == 'POST':
@@ -43,14 +44,15 @@ def register():
 
         if existing_user is None:
             hashpass = bcrypt.hashpw(request.form['password'].encode('utf-8'), bcrypt.gensalt())
-            users.insert_one({'name': request.form['name'], 'surname': request.form['surname'], 'email': request.form['email'], 'password': hashpass})
-            session['email'] =  request.form['email']
+            users.insert_one(
+                {'name': request.form['name'], 'surname': request.form['surname'], 'email': request.form['email'],
+                 'password': hashpass})
+            session['email'] = request.form['email']
             return redirect(url_for('index'))
 
         return 'That username already exists!'
 
     return render_template('register.html')
-
 
 
 @app.route('/password')
@@ -149,6 +151,7 @@ def after_req(resp):
     except Exception:
         pass
     return resp
+
 
 # https://stackoverflow.com/a/63216793
 def main():
