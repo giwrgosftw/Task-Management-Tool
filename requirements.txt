@@ -1,3 +1,5 @@
+bcrypt==3.2.0
+cffi==1.14.5
 click==7.1.2
 decorator==4.4.2
 dnspython==2.1.0
@@ -11,6 +13,7 @@ intervals==0.9.1
 itsdangerous==1.1.0
 Jinja2==2.11.3
 MarkupSafe==1.1.1
+pycparser==2.20
 pymongo==3.11.3
 python-dotenv==0.15.0
 resp==0.1.2
