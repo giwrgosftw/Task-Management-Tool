@@ -1,0 +1,9 @@
+setup.cfg
+setup.py
+resp/Parser.py
+resp/__init__.py
+resp/__main__.py
+resp.egg-info/PKG-INFO
+resp.egg-info/SOURCES.txt
+resp.egg-info/dependency_links.txt
+resp.egg-info/top_level.txt
