@@ -2,7 +2,6 @@ import os
 import webbrowser
 
 from flask import Flask, render_template, request, g, jsonify
-from threading import Timer
 from forms.project_form import ProjectForm
 from models.project import Project, db_session
 from models.models import mongoDB, create_app
@@ -59,7 +58,7 @@ def new_project():
 @app.route('/test')
 def test():
     # collections (aka tables) can be created on the third argument eg. tasks_table
-    add_task = settings.db.task_table.insert({"Task": "Add data", 'assigned': 'Patryk'})
+    add_task = settings.db.task_table.insert_one({"Task": "Add data", 'assigned': 'Patryk'})
     return render_template('/test.html', addtask=add_task)
 
 

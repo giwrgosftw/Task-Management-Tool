@@ -1,7 +1,5 @@
 __pycache__/
 *.pyc
 venv/
-.idea/*
+/.idea
 .DS_store
-.idea/TaskManagementTool.iml
-.idea/misc.xml
