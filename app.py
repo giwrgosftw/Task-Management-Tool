@@ -2,7 +2,7 @@ import os
 import webbrowser
 
 from flask import Flask, render_template, request, g, jsonify, url_for, session, redirect
-
+from flask_login import login_user, logout_user, login_required
 from threading import Timer
 from forms.project_form import ProjectForm
 from models.project import Project, db_session
@@ -22,7 +22,7 @@ def index():
 @app.route('/welcome')
 def welcome():
     if 'email' in session:
-        return render_template('dashboard/user_page.html')
+        return render_template('dashboard/index.html')
 
     return render_template('login.html')
 
