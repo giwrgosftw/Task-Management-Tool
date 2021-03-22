@@ -35,7 +35,6 @@ def login():
 
     return 'Invalid username or password'
 
-
 @app.route('/register', methods=['POST', 'GET'])
 def register():
     if request.method == 'POST':
@@ -44,15 +43,14 @@ def register():
 
         if existing_user is None:
             hashpass = bcrypt.hashpw(request.form['password'].encode('utf-8'), bcrypt.gensalt())
-            users.insert_one(
-                {'name': request.form['name'], 'surname': request.form['surname'], 'email': request.form['email'],
-                 'password': hashpass})
-            session['email'] = request.form['email']
+            users.insert_one({'name': request.form['name'], 'surname': request.form['surname'], 'email': request.form['email'], 'password': hashpass})
+            session['email'] =  request.form['email']
             return redirect(url_for('index'))
 
         return 'That username already exists!'
 
     return render_template('register.html')
+
 
 
 @app.route('/password')
@@ -93,7 +91,7 @@ def new_project():
 @app.route('/test')
 def test():
     # collections (aka tables) can be created on the third argument eg. tasks_table
-    add_task = settings.db.task_table.insert_one({"Task": "Add data", 'assigned': 'Patryk'})
+    add_task = settings.db.task_table.insert({"Task": "Add data", 'assigned': 'Patryk'})
     return render_template('/test.html', addtask=add_task)
 
 
