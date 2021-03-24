@@ -2,7 +2,7 @@ import os
 import webbrowser
 
 from flask import Flask, render_template, request, g, jsonify, url_for, session, redirect
-
+from flask_login import login_user, logout_user, login_required
 from threading import Timer
 from forms.project_form import ProjectForm
 from models.project import Project, db_session
@@ -14,11 +14,15 @@ app = Flask(__name__)
 app.secret_key = "mysecret"
 app.debug = os.environ.get('DEBUG', True)
 
-
 @app.route('/')
 def index():
+    return render_template('index.html')
+
+
+@app.route('/welcome')
+def welcome():
     if 'email' in session:
-        return 'You are logged in as ' + session['email']
+        return render_template('dashboard/index.html')
 
     return render_template('login.html')
 
@@ -31,10 +35,12 @@ def login():
     if login_user:
         if bcrypt.hashpw(request.form['password'].encode('utf-8'), login_user['password']) == login_user['password']:
             session['email'] = request.form['email']
-            return redirect(url_for('index'))
+            return redirect(url_for('welcome'))
 
     return 'Invalid username or password'
 
+
+# https://www.youtube.com/watch?v=vVx1737auSE&list=PLXmMXHVSvS-Db9KK1LA7lifcyZm4c-rwj&index=5
 @app.route('/register', methods=['POST', 'GET'])
 def register():
     if request.method == 'POST':
@@ -44,13 +50,12 @@ def register():
         if existing_user is None:
             hashpass = bcrypt.hashpw(request.form['password'].encode('utf-8'), bcrypt.gensalt())
             users.insert_one({'name': request.form['name'], 'surname': request.form['surname'], 'email': request.form['email'], 'password': hashpass})
-            session['email'] =  request.form['email']
-            return redirect(url_for('index'))
+            session['email'] = request.form['email']
+            return redirect(url_for('welcome'))
 
         return 'That username already exists!'
 
     return render_template('register.html')
-
 
 
 @app.route('/password')

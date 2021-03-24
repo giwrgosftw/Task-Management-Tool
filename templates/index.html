@@ -1,0 +1,78 @@
+{% extends "base.html" %} {% block content %}
+<figure class="image is-2by1">
+  <img
+    src="https://wac-cdn-2.atlassian.com/image/upload/f_auto,q_auto/dam/jcr:b86a32cb-0aa8-4783-aa81-9592d4fbf829/jsw-header-illustrations---v3.png?cdnVersion=1501"
+  />
+</figure>
+<section class="hero is-info section is-small">
+  <h1 class="title">Project Management tool</h1>
+  <h2 class="subtitle">
+    An easy development tool used by <strong>agile teams</strong>. <br />
+    It is built for every member of your software team to
+    <strong>plan, track, and release</strong> great software.
+  </h2>
+</section>
+<br /><br /><br />
+
+<section class="hero is-medium is-red">
+  <div class="hero-body">
+    <div class="container">
+      <div class="columns is-multiline is-centered">
+        <div class="column is-4 has-text-centered">
+          <div class="icon callout-icon">
+            <i class="fas fa-copy fa-4x"></i>
+          </div>
+          <br /><br />
+          <p class="title is-10">Plan</p>
+          <p class="subtitle is-5">
+            Create user stories and issues, plan sprints, and distribute tasks
+            across your software team.
+          </p>
+        </div>
+
+        <div class="column is-4 has-text-centered">
+          <div class="icon callout-icon">
+            <i class="fas fa-tasks fa-4x"></i>
+          </div>
+          <br /><br />
+          <p class="title is-10">Track</p>
+          <p class="subtitle is-5">
+            Prioritize and discuss your team’s work in full context with
+            complete visibility.
+          </p>
+        </div>
+
+        <div class="column is-4 has-text-centered">
+          <div class="icon callout-icon">
+            <i class="fas fa-code-branch fa-4x"></i>
+          </div>
+          <br /><br />
+          <p class="title is-10">Release</p>
+          <p class="subtitle is-5">
+            Ship with confidence and sanity knowing the information you have is
+            always up-to-date.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<div class="Sing up">
+  <a class="button is-primary is-medium" href="{{ url_for('register') }}"
+    >Sign Up</a
+  >
+</div>
+<br /><br /><br />
+<section class="section" id="how-it-works">
+  <div class="container has-text-centered">
+    <div class="section-header">
+      <h2 class="title">Go agile with ease</h2>
+      <h3 class="subtitle">
+        Whether you’re a seasoned agile expert, or just getting started, this
+        Software unlocks the power of agile.
+      </h3>
+    </div>
+  </div>
+</section>
+
+{% endblock %}
