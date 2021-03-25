@@ -1,6 +1,6 @@
 import os
 import webbrowser
-
+import logging
 from flask import Flask, render_template, request, g, jsonify, url_for, session, redirect
 from flask_login import login_user, logout_user, login_required
 from threading import Timer
@@ -13,6 +13,7 @@ import bcrypt
 app = Flask(__name__)
 app.secret_key = "mysecret"
 app.debug = os.environ.get('DEBUG', True)
+
 
 @app.route('/')
 def index():
@@ -65,7 +66,7 @@ def forgot_password():
 
 @app.route('/logout')
 def logout():
-    return render_template('dashboard/index.html')
+    return render_template('index.html')
 
 
 @app.route('/dashboard')
@@ -75,21 +76,35 @@ def dashboard():
 
 # https://github.com/wtforms/wtforms-sqlalchemy/blob/master/examples/flask/basic.py
 # 53:00
-@app.route('/dashboard/projects/new', methods=['GET', 'POST'])
-def new_project():
-    project = Project()
-    success = False
-    form = ProjectForm(request.form, obj=project)
+# end points for registered users
+@app.route('/dashboard/projects/new', methods=['POST', 'GET'])
+def newproject():
+    #username = settings.db.users.find_one({"email": username})
+    #logging.debug(username)
+    if request.method == 'POST':
+        tasks = settings.db.task_table
+        existing_task = tasks.find_one({'title': request.form['title']})
 
-    if request.method == 'GET':
-        form = ProjectForm(obj=project)
-        return render_template('dashboard/projects-page/new-project.html', form=form, success=success)
+        if existing_task is None:
+            tasks.insert_one({'title': request.form['title'], 'description': request.form['description'], 'date': request.form['date']})
+            return redirect(url_for('newproject'))
 
-    if form.validate():
-        form.populate_obj(project)
-        g.db.add(project)
-        g.db.commit()
-        success = True
+        return 'That task already exists!'
+
+    return render_template('dashboard/projects-page/new-project.html')
+
+
+@app.route('/dashboard/projects/search', methods=['GET'])
+def seachproject():
+
+    search_query = settings.db.task_table.find()
+    output = {}
+    i = 0
+    for x in search_query:
+        output[i] = x
+        output[i].pop('_id')
+        i += 1
+    return jsonify(output)
 
 
 # https://www.geeksforgeeks.org/make-python-api-to-access-mongo-atlas-database/
