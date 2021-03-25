@@ -4,18 +4,18 @@
 {% block content %}
 <div id="layoutSidenav">
     <div id="layoutSidenav_content">
-        <form method="POST">
+        <form method="POST" action="{{ url_for('newproject') }}">
             <div class='container-fluid'>
                 <label style=margin-top:10px; for='title'>Project Subject</label>
-                <input type='text' id='title' name='title' class='form-control'/>
+                <input type='text' id='title' name="title" class='form-control'/>
             </div>
             <div class="container-fluid">
                 <label style=margin-top:10px; for="description">Description</label>
-                <textarea class="form-control" name='description' id="description" rows="3"></textarea>
+                <textarea class="form-control" name="description" id="description" rows="3"></textarea>
             </div>
             <div class="container-fluid">
                 <label style=margin-top:10px; for="date">Deadline</label>
-                <input type='date' id='date' name='date' class='form-control'/>
+                <input type='date' id='date' name="date" class='form-control'/>
             </div>
             <div class="container-fluid">
                 <button style=margin-top:10px; type="submit" >Submit </button>
