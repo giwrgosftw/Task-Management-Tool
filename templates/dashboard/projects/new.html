@@ -1,12 +1,11 @@
 {% extends "dashboard/base.html" %}
 
-{% import 'macros/macros.html' as macros %} <!-- integrate macros forms into boostrap -->
 {% block content %}
 <div id="layoutSidenav">
     <div id="layoutSidenav_content">
-        <form method="POST" action="{{ url_for('newproject') }}">
+        <form method="POST" action="{{ url_for('create_new_project') }}">
             <div class='container-fluid'>
-                <label style=margin-top:10px; for='title'>Project Subject</label>
+                <label style=margin-top:10px; for='title'>Project Subject</label> <!-- following the examples of https://getbootstrap.com/docs/4.3/components/forms/ -->
                 <input type='text' id='title' name="title" class='form-control'/>
             </div>
             <div class="container-fluid">
@@ -18,7 +17,7 @@
                 <input type='date' id='date' name="date" class='form-control'/>
             </div>
             <div class="container-fluid">
-                <button style=margin-top:10px; type="submit" >Submit </button>
+                <button style=margin-top:10px; type="submit" class="btn btn-primary">Submit </button>
             </div>
         </form>
     </div>
