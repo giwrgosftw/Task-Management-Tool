@@ -71,7 +71,8 @@ def logout():
 
 @app.route('/dashboard')
 def dashboard():
-    return render_template('dashboard/home.html')  # https://startbootstrap.com/template/sb-admin
+    projects = mongo.db.project_table.find({}, {"title": 1, "description": 1, "date": 1})
+    return render_template('dashboard/home.html',projects=projects)  # https://startbootstrap.com/template/sb-admin
 
 
 @app.route('/dashboard/projects/new', methods=['POST', 'GET'])
@@ -83,10 +84,12 @@ def create_new_project():
         if existing_project is None:
             project_collection.insert_one({'title': request.form['title'], 'description': request.form['description'],
                                            'date': request.form['date']})
-            return redirect(url_for('create_new_project'))
+            # As soon as we made the changes we want to redirect (else the url link will not change)
+            return redirect(url_for('table'))
 
         return 'That project already exists!'
 
+    # This is when we press the view option for first time
     return render_template('dashboard/projects/new.html')
 
 
@@ -96,7 +99,6 @@ def view_project(project_id):
     # Check if the project exists in the db table based on the id
     project = mongo.db.project_table.find_one_or_404(project_id)
 
-    # This is when we press the view option for first time
     return render_template('dashboard/projects/view.html', project=project)
 
 
@@ -112,7 +114,6 @@ def update_project(project_id):
                                                "date": request.form.get('date')
                                            }
                                            })
-    # As soon as we made the changes we want to redirect (else the url link will not change)
     return redirect(url_for('view_project', project_id=project_id))
 
 
@@ -120,7 +121,7 @@ def update_project(project_id):
 @app.route('/dashboard/projects/delete/<ObjectId:project_id>', methods=['POST'])
 def delete_project(project_id):
     mongo.db.project_table.remove({'_id': project_id})
-    return redirect(url_for('dashboard'))
+    return redirect(url_for('table'))
 
 
 @app.route('/dashboard/projects/search', methods=['GET'])
@@ -136,6 +137,17 @@ def search_project():
 
 
 # -----> END OF DASHBOARD PAGES AND FUNCTIONS <-----
+
+# -----> TABLE TAB PAGES AND FUNCTIONS <-----
+
+# Source: https://stackoverflow.com/questions/53425222/python-flask-i-want-to-display-the-data-that-present-in-mongodb-on-a-html-page
+@app.route('/dashboard/table')
+def table():
+    projects = mongo.db.project_table.find({}, {"title": 1, "description": 1, "date": 1})
+    return render_template('dashboard/table.html', projects=projects)
+
+
+# -----> END OF TABLE TAP PAGES FUNCTIONS <-----
 
 
 # -----> DATABASE FUNCTIONS <-----
