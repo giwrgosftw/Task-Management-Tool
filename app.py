@@ -1,8 +1,9 @@
 import os
 import webbrowser
+import bcrypt
+
 from flask import Flask, render_template, request, jsonify, url_for, session, redirect
 from mongodb_models import settings_mongo
-import bcrypt
 
 app = Flask(__name__)
 app.secret_key = "my_secret_key"
@@ -73,12 +74,10 @@ def dashboard():
     return render_template('dashboard/home.html')  # https://startbootstrap.com/template/sb-admin
 
 
-# https://github.com/wtforms/wtforms-sqlalchemy/blob/master/examples/flask/basic.py
-# end points for registered users
 @app.route('/dashboard/projects/new', methods=['POST', 'GET'])
 def create_new_project():
     if request.method == 'POST':
-        project_collection = mongo.db.task_table
+        project_collection = mongo.db.project_table
         existing_project = project_collection.find_one({'title': request.form['title']})
 
         if existing_project is None:
@@ -91,21 +90,42 @@ def create_new_project():
     return render_template('dashboard/projects/new.html')
 
 
-@app.route('/dashboard/projects/view/<ObjectId:task_id>', methods=['GET'])
-def view_project(task_id):
-    task = mongo.db.task_table.find_one_or_404(task_id)
-    return render_template('dashboard/projects/view.html', task=task)
+# View a Project
+@app.route('/dashboard/projects/view/<ObjectId:project_id>', methods=['GET'])
+def view_project(project_id):
+    # Check if the project exists in the db table based on the id
+    project = mongo.db.project_table.find_one_or_404(project_id)
+
+    # This is when we press the view option for first time
+    return render_template('dashboard/projects/view.html', project=project)
 
 
-@app.route('/dashboard/projects/edit/<ObjectId:task_id>', methods=['POST', 'GET'])
-def update_project(task_id):
-    task = mongo.db.tasks.find_one({"_id": task_id})
-    return render_template('dashboard/projects/edit.html', task=task)
+# Update Project details
+@app.route('/dashboard/projects/update/<ObjectId:project_id>', methods=['POST'])
+def update_project(project_id):
+    project_collection = mongo.db.project_table
+    project_collection.find_one_and_update({"_id": project_id},
+                                           {"$set": {
+                                               # The error is here, it gives NULL for some reason
+                                               "title": request.form.get('title'),
+                                               "description": request.form.get('description'),
+                                               "date": request.form.get('date')
+                                           }
+                                           })
+    # As soon as we made the changes we want to redirect (else the url link will not change)
+    return redirect(url_for('view_project', project_id=project_id))
+
+
+# Delete a project
+@app.route('/dashboard/projects/delete/<ObjectId:project_id>', methods=['POST'])
+def delete_project(project_id):
+    mongo.db.project_table.remove({'_id': project_id})
+    return redirect(url_for('dashboard'))
 
 
 @app.route('/dashboard/projects/search', methods=['GET'])
 def search_project():
-    search_query = mongo.db.task_table.find()
+    search_query = mongo.db.project_table.find()
     output = {}
     i = 0
     for x in search_query:
@@ -126,7 +146,7 @@ def insert_one(name, id_):
         'Name': name,
         'ID': id_
     }
-    mongo.db.task_table.insert_one(query_object)
+    mongo.db.project_table.insert_one(query_object)
     return "Query inserted...!!!"
 
 
@@ -136,7 +156,7 @@ def insert_one(name, id_):
 # argument.
 @app.route('/find/', methods=['GET'])
 def find_all():
-    query = mongo.db.task_table.find()
+    query = mongo.db.project_table.find()
     output = {}
     i = 0
     for x in query:
@@ -154,7 +174,7 @@ def find_all():
 def update(key, value, element, update_value):
     query_object = {key: value}
     update_object = {element: update_value}
-    query = mongo.db.task_table.update_one(query_object, {'$set': update_object})
+    query = mongo.db.project_table.update_one(query_object, {'$set': update_object})
     if query.acknowledged:
         return "Update Successful"
     else:

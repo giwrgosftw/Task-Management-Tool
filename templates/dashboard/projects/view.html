@@ -1,17 +1,27 @@
 {% extends "dashboard/base.html" %}
 {% block content %}
-
-            <div class="card">
+    <div id="layoutSidenav">
+        <div id="layoutSidenav_content">
                 <div class="card-header">
-                    <h4> Project ID: {{task._id}} </h4>
+                    <h4> Project ID: {{project._id}} </h4>
                 </div>
                 <div class="card-body">
-                    <p class="card-title"> Project title: {{task.title}}</p>
-                    <p class="card-text"> Project description: {{task.description}}</p>
-                    <p class="card-date"> Project description: {{task.date}}</p>
-                    <a href="{{ '/dashboard/projects/edit/%s'%task._id }}" class="btn btn-primary">Edit</a>
+                    <label>Title</label>
+                    <input value={{project.title}} class="form-control"/>
+
+                    <label style=margin-top:30px;>Description</label>
+                    <input value={{project.description}} class="form-control"/>
+
+                    <label style=margin-top:30px;>Deadline</label>
+                    <input type="date" value="{{project.date}}" class="form-control"/>
+
+                    <form method="POST" action="{{ url_for('update_project', project_id=project._id) }}">
+                        <button style=margin-top:10px; type="submit" class="btn btn-primary">Update </button>
+                    </form>
+                    <form method="POST" action="{{ url_for('delete_project', project_id=project._id) }}">
+                        <button style=margin-top:10px; type="submit" class="btn btn-danger">Delete </button>
+                    </form>
                 </div>
-            </div>
         </div>
     </div>
-{% endblock %} 
+{% endblock %}
