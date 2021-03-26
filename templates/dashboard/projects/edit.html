@@ -1,0 +1,27 @@
+{% extends "dashboard/base.html" %}
+{% block content %}
+    <div id="layoutSidenav">
+        <div id="layoutSidenav_content">
+            <div class="card-header">
+                <h4> Edit Project ID: {{task._id}} </h4>
+            </div>
+            <div class="card-body">
+                <label>Title</label>
+                <input value="{{task.title}}" class="form-control"/>
+            </div>
+            <div class="card-body">
+                <label>Description</label>
+                <textarea class="form-control">
+                    {{task.description}}
+                </textarea>
+            </div>
+            <div class="card-body">
+                <label>Date</label>
+                <input value="{{task.date}}" class="form-control"/>
+            </div>
+            <div class="container-fluid">
+                <button style=margin-top:10px; type="submit" >Submit </button>
+            </div>
+        </div>
+    </div>
+{% endblock %}

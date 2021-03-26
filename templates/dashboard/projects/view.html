@@ -1,0 +1,17 @@
+{% extends "dashboard/base.html" %}
+{% block content %}
+
+            <div class="card">
+                <div class="card-header">
+                    <h4> Project ID: {{task._id}} </h4>
+                </div>
+                <div class="card-body">
+                    <p class="card-title"> Project title: {{task.title}}</p>
+                    <p class="card-text"> Project description: {{task.description}}</p>
+                    <p class="card-date"> Project description: {{task.date}}</p>
+                    <a href="{{ '/dashboard/projects/edit/%s'%task._id }}" class="btn btn-primary">Edit</a>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %} 
