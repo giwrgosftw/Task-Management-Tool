@@ -2,26 +2,25 @@
 {% block content %}
     <div id="layoutSidenav">
         <div id="layoutSidenav_content">
+            <form method="POST" action="{{ url_for('update_project', project_id=project._id) }}">
                 <div class="card-header">
                     <h4> Project ID: {{project._id}} </h4>
                 </div>
                 <div class="card-body">
                     <label>Title</label>
-                    <input value={{project.title}} class="form-control"/>
+                    <input value="{{project.title}}" id='title' name="title" class="form-control"/>
 
                     <label style=margin-top:30px;>Description</label>
-                    <input value={{project.description}} class="form-control"/>
+                    <input value="{{project.description}}" id='description' name="description" class="form-control"/>
 
                     <label style=margin-top:30px;>Deadline</label>
-                    <input type="date" value="{{project.date}}" class="form-control"/>
+                    <input type="date" value="{{project.date}}" id='date' name="date" class="form-control"/>
 
-                    <form method="POST" action="{{ url_for('update_project', project_id=project._id) }}">
-                        <button style=margin-top:10px; type="submit" class="btn btn-primary">Update </button>
-                    </form>
-                    <form method="POST" action="{{ url_for('delete_project', project_id=project._id) }}">
-                        <button style=margin-top:10px; type="submit" class="btn btn-danger">Delete </button>
-                    </form>
+                    <button style=margin-top:10px; type="submit" class="btn btn-primary">Update </button>
+                    <button style=margin-top:10px; type="submit" class="btn btn-danger" formaction="{{ url_for('delete_project', project_id=project._id)}}">Delete </button>
+
                 </div>
+            </form>
         </div>
     </div>
 {% endblock %}

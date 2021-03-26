@@ -72,7 +72,7 @@ def logout():
 @app.route('/dashboard')
 def dashboard():
     projects = mongo.db.project_table.find({}, {"title": 1, "description": 1, "date": 1})
-    return render_template('dashboard/home.html',projects=projects)  # https://startbootstrap.com/template/sb-admin
+    return render_template('dashboard/home.html', projects=projects)  # https://startbootstrap.com/template/sb-admin
 
 
 @app.route('/dashboard/projects/new', methods=['POST', 'GET'])
@@ -108,13 +108,12 @@ def update_project(project_id):
     project_collection = mongo.db.project_table
     project_collection.find_one_and_update({"_id": project_id},
                                            {"$set": {
-                                               # The error is here, it gives NULL for some reason
                                                "title": request.form.get('title'),
                                                "description": request.form.get('description'),
                                                "date": request.form.get('date')
                                            }
                                            })
-    return redirect(url_for('view_project', project_id=project_id))
+    return redirect(url_for('table', project_id=project_id))
 
 
 # Delete a project
