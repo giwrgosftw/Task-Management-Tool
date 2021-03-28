@@ -150,7 +150,11 @@ def update_task(task_id):
                                             "date": request.form.get('date')
                                         }
                                         })
-    return redirect(url_for('table'))
+    project_id_dict = task_collection.find_one({'_id': task_id}, {'project_id': 1, '_id': 0})  # gives e.g, {'project_id': ObjectId('6060530cf082cd618caaad54')}
+    project_id_string = str(project_id_dict)  # we want to take only the substring which is inside the parenthesis (the id), but it will be easier to convert the whole dict to a string
+    project_id = project_id_string[project_id_string.find("(") + 1:project_id_string.find(")")].replace("'", "")  # gives '6060530cf082cd618caaad54' and then 6060530cf082cd618caaad54
+
+    return redirect(url_for('view_project', project_id=project_id))
 
 
 # Delete a task
@@ -164,7 +168,12 @@ def clear_task_fields(task_id):
                                             "date": ""
                                         }
                                         })
-    return redirect(url_for('table'))
+
+    project_id_dict = task_collection.find_one({'_id': task_id}, {'project_id': 1, '_id': 0})  # gives e.g, {'project_id': ObjectId('6060530cf082cd618caaad54')}
+    project_id_string = str(project_id_dict)  # we want to take only the substring which is inside the parenthesis (the id), but it will be easier to convert the whole dict to a string
+    project_id = project_id_string[project_id_string.find("(") + 1:project_id_string.find(")")].replace("'", "")  # gives '6060530cf082cd618caaad54' and then 6060530cf082cd618caaad54
+
+    return redirect(url_for('view_project', project_id=project_id))
 
 
 # -----> END OF DASHBOARD PAGES AND FUNCTIONS <-----
