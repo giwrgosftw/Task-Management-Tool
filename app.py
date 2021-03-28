@@ -39,12 +39,12 @@ def login():
 def register():
     if request.method == 'POST':
         users = mongo.db.users
-        existing_user = users.find_one({'name': request.form['email']})
+        existing_user = users.find_one({'email': request.form['email']})
 
         if existing_user is None:
             hash_pass = bcrypt.hashpw(request.form['password'].encode('utf-8'), bcrypt.gensalt())
             users.insert_one(
-                {'name': request.form['name'], 'surname': request.form['surname'], 'email': request.form['email'],
+                {'fullname': request.form['fullname'], 'email': request.form['email'],
                  'password': hash_pass})
             session['email'] = request.form['email']
             return redirect(url_for('welcome_login'))  # account created successfully navigate me to the login page
