@@ -78,13 +78,12 @@ def dashboard():
 @app.route('/dashboard/projects/new_project', methods=['POST', 'GET'])
 def create_new_project():
 
-    # https://docs.mongodb.com/manual/reference/database-references/
-    project_id = ObjectId()  # setup the project's id
-
     if request.method == 'POST':
 
+        # https://docs.mongodb.com/manual/reference/database-references/
+        project_id = ObjectId()  # setup the project's id
+
         project_collection = mongo.db.project_table  # project collection
-        task_collection = mongo.db.task_table  # task collection
         existing_project = project_collection.find_one({'title': request.form['project_title']})
 
         if existing_project is None:
@@ -92,16 +91,15 @@ def create_new_project():
                                            'title': request.form['project_title'],
                                            'description': request.form['project_description'],
                                            'date': request.form['project_date']})
-            task_collection.insert_one({'title': request.form['task_title'],
-                                        'description': request.form['task_description'],
-                                        'date': request.form['task_date'],
-                                        'project_id': project_id})
+            # As soon as the project is created, the next step will be to add a new empty task
+            # so that the user to be able to add details there
+            insert_new_empty_task(project_id)
 
-            return redirect(url_for('table'))
+            return redirect(url_for('view_project', project_id=project_id))
 
         return 'That project already exists!'
 
-    return render_template('dashboard/projects/new.html', project=project_id)
+    return render_template('dashboard/projects/new.html')
 
 
 # View a Project
@@ -128,7 +126,7 @@ def update_project(project_id):
                                            }
                                            })
 
-    return redirect(url_for('table', project_id=project_id))
+    return redirect(url_for('view_project', project_id=project_id))
 
 
 # Delete a project
