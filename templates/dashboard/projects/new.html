@@ -5,21 +5,59 @@
     <div id="layoutSidenav_content">
         <form method="POST" action="{{ url_for('create_new_project') }}">
             <div class='container-fluid'>
-                <label style=margin-top:10px; for='title'>Project Subject</label> <!-- following the examples of https://getbootstrap.com/docs/4.3/components/forms/ -->
-                <input type='text' id='title' name="title" class='form-control'/>
+                <label style=margin-top:10px; for='project_title'>Project Subject</label> <!-- following the examples of https://getbootstrap.com/docs/4.3/components/forms/ -->
+                <input type='text' id='project_title' name="project_title" class='form-control'/>
             </div>
             <div class="container-fluid">
-                <label style=margin-top:10px; for="description">Description</label>
-                <textarea class="form-control" name="description" id="description" rows="3"></textarea>
+                <label style=margin-top:10px; for="project_description">Description</label>
+                <textarea class="form-control" name="project_description" id="project_description" rows="3"></textarea>
             </div>
             <div class="container-fluid">
-                <label style=margin-top:10px; for="date">Deadline</label>
-                <input type='date' id='date' name="date" class='form-control'/>
+                <label style=margin-top:10px; for="project_date">Deadline</label>
+                <input type='date' id='project_date' name="project_date" class='form-control'/>
             </div>
             <div class="container-fluid">
                 <button style=margin-top:10px; type="submit" class="btn btn-primary">Submit </button>
             </div>
+
+            <!-- https://datatables.net/examples/api/form.html -->
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered" width="100%" cellspacing="0">
+                        <thead>
+                        <tr>
+                            <th>Add your task(s)</th>
+                            <th>Small Description</th>
+                            <th>Deadline</th>
+                            <th>Assign to</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr>
+                            <td><input type='text' id='task_title' name="task_title" class='form-control'/></td>
+                            <td><input type='text' id='task_description' name="task_description" class='form-control'/></td>
+                            <td><input type='date' id='task_date' name="task_date" class='form-control'/></td>
+                            <td><select size="1" id="users" name="users" class='form-control'>
+                                <option value="Richard"> Richard</option>
+                                <option value="Georgios"> Georgios</option>
+                            </select></td>
+                        </tr>
+
+                        </tbody>
+                        <tfoot>
+                        <tr>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                        </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+
         </form>
+
     </div>
 </div>
 {% endblock %}
