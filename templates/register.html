@@ -21,19 +21,9 @@
                                     <div class="card-header"><h3 class="text-center font-weight-light my-4">Create Account</h3></div>
                                     <div class="card-body">
                                             <form method="POST" action="{{ url_for('register') }}">
-                                            <div class="form-row">
-                                                <div class="col-md-6">
-                                                    <div class="form-group">
-                                                        <label class="small mb-1" for="inputFirstName">First Name</label>
-                                                        <input class="form-control py-4" id="inputFirstName" name="name" placeholder="Enter first name" />
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <div class="form-group">
-                                                        <label class="small mb-1" for="inputLastName">Last Name</label>
-                                                        <input class="form-control py-4" id="inputLastName" name="surname" placeholder="Enter last name" />
-                                                    </div>
-                                                </div>
+                                            <div class="form-group">
+                                                <label class="small mb-1" for="inputFullName">Full name</label>
+                                                <input class="form-control py-4" id="inputFullName" name="fullname" placeholder="Enter full name" />
                                             </div>
                                             <div class="form-group">
                                                 <label class="small mb-1" for="inputEmailAddress">Email</label>
