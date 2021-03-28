@@ -2,7 +2,7 @@
 {% block content %}
     <div id="layoutSidenav">
         <div id="layoutSidenav_content">
-            <form method="POST" action="{{ url_for('update_project', project_id=project._id) }}">
+            <form method="POST">
                 <div class="card-header">
                     <h4> Project ID: {{project._id}} </h4>
                 </div>
@@ -16,11 +16,55 @@
                     <label style=margin-top:30px;>Deadline</label>
                     <input type="date" value="{{project.date}}" id='date' name="date" class="form-control"/>
 
-                    <button style=margin-top:10px; type="submit" class="btn btn-primary">Update </button>
-                    <button style=margin-top:10px; type="submit" class="btn btn-danger" formaction="{{ url_for('delete_project', project_id=project._id)}}">Delete </button>
-
+                    <button style=margin-top:10px; type="submit" class="btn btn-primary" formaction="{{ url_for('update_project', project_id=project._id) }}" >Update </button>
+                    <button style=margin-top:10px; type="submit" class="btn btn-danger" formaction="{{ url_for('delete_project', project_id=project._id) }}"> Delete </button>
                 </div>
             </form>
+
+
+            <form method="POST">
+                    <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered" width="100%" cellspacing="0">
+                            <thead>
+                            <tr>
+                                <th>Add your task(s)</th>
+                                <th>Small Description</th>
+                                <th>Deadline</th>
+                                <th>Assign to</th>
+                                <th>Edit</th>
+                                <th>Delete</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr>
+                                <td><input value="{{task.title}}" id='title' name="title" class="form-control"/></td>
+                                <td><input value="{{task.description}}" id='description' name="description" class="form-control"/></td>
+                                <td><input type="date" value="{{task.date}}" id='date' name="date" class="form-control"/></td>
+                                <td><select size="1" id="users" name="users" class='form-control'>
+                                    <option value="Richard"> Richard</option>
+                                    <option value="Georgios"> Georgios</option>
+                                </select></td>
+                                <td><button style=margin-top:10px; type="submit" class="btn btn-primary" formaction= "{{ url_for('update_task', task_id=task._id) }}" > Update </button></td>
+                                <td><button style=margin-top:10px; type="submit" class="btn btn-danger" formaction= "{{ url_for('clear_task_fields', task_id=task._id) }}"> Delete </button></td>
+                            </tr>
+
+                            </tbody>
+                            <tfoot>
+                            <tr>
+                                <th></th>
+                                <th></th>
+                                <th></th>
+                                <th></th>
+                                <th></th>
+                                <th></th>
+                            </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </form>
+
         </div>
     </div>
 {% endblock %}

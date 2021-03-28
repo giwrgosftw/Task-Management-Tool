@@ -2,8 +2,9 @@ import os
 import webbrowser
 import bcrypt
 
-from flask import Flask, render_template, request, jsonify, url_for, session, redirect
+from flask import Flask, render_template, request, url_for, session, redirect
 from mongodb_models import settings_mongo
+from bson import ObjectId
 
 app = Flask(__name__)
 app.secret_key = "my_secret_key"
@@ -61,7 +62,7 @@ def forgot_password():
 # Logout means: send me back to the login page (for now)
 @app.route('/logout')
 def logout():
-    return render_template('login.html')
+    return redirect(url_for('welcome_login'))
 
 
 # -----> END OF OUTSIDE DASHBOARD PAGES AND FUNCTIONS <-----
@@ -78,12 +79,24 @@ def dashboard():
 @app.route('/dashboard/projects/new', methods=['POST', 'GET'])
 def create_new_project():
     if request.method == 'POST':
-        project_collection = mongo.db.project_table
-        existing_project = project_collection.find_one({'title': request.form['title']})
+
+        # https://docs.mongodb.com/manual/reference/database-references/
+        project_id = ObjectId()  # setup the project's id
+
+        project_collection = mongo.db.project_table  # project collection
+        task_collection = mongo.db.task_table  # task collection
+        existing_project = project_collection.find_one({'title': request.form['project_title']})
 
         if existing_project is None:
-            project_collection.insert_one({'title': request.form['title'], 'description': request.form['description'],
-                                           'date': request.form['date']})
+            project_collection.insert_one({"_id": project_id,
+                                           'title': request.form['project_title'],
+                                           'description': request.form['project_description'],
+                                           'date': request.form['project_date']})
+            task_collection.insert_one({'title': request.form['task_title'],
+                                        'description': request.form['task_description'],
+                                        'date': request.form['task_date'],
+                                        'project_id': project_id})
+
             # As soon as we made the changes we want to redirect (else the url link will not change)
             return redirect(url_for('table'))
 
@@ -97,9 +110,10 @@ def create_new_project():
 @app.route('/dashboard/projects/view/<ObjectId:project_id>', methods=['GET'])
 def view_project(project_id):
     # Check if the project exists in the db table based on the id
-    project = mongo.db.project_table.find_one_or_404(project_id)
+    project = mongo.db.project_table.find_one_or_404({'_id': project_id})
+    task = mongo.db.task_table.find_one_or_404({'project_id': project_id})
 
-    return render_template('dashboard/projects/view.html', project=project)
+    return render_template('dashboard/projects/view.html', project=project, task=task)
 
 
 # Update Project details
@@ -119,27 +133,46 @@ def update_project(project_id):
 # Delete a project
 @app.route('/dashboard/projects/delete/<ObjectId:project_id>', methods=['POST'])
 def delete_project(project_id):
+    # Delete the project and the tasks from the database
     mongo.db.project_table.remove({'_id': project_id})
+    mongo.db.task_table.remove({'project_id': project_id})
     return redirect(url_for('table'))
 
 
-@app.route('/dashboard/projects/search', methods=['GET'])
-def search_project():
-    search_query = mongo.db.project_table.find()
-    output = {}
-    i = 0
-    for x in search_query:
-        output[i] = x
-        output[i].pop('_id')
-        i += 1
-    return jsonify(output)
+# Update Project details
+@app.route('/dashboard/projects/update1/<ObjectId:task_id>', methods=['POST'])
+def update_task(task_id):
+    task_collection = mongo.db.task_table
+    task_collection.find_one_and_update({"_id": task_id},
+                                        {"$set": {
+                                            "title": request.form.get('title'),
+                                            "description": request.form.get('description'),
+                                            "date": request.form.get('date')
+                                        }
+                                        })
+    return redirect(url_for('table'))
+
+
+# Delete a task
+@app.route('/dashboard/projects/delete1/<ObjectId:task_id>', methods=['POST'])
+def clear_task_fields(task_id):
+    task_collection = mongo.db.task_table
+    task_collection.find_one_and_update({"_id": task_id},
+                                        {"$set": {
+                                            "title": "",
+                                            "description": "",
+                                            "date": ""
+                                        }
+                                        })
+    return redirect(url_for('table'))
 
 
 # -----> END OF DASHBOARD PAGES AND FUNCTIONS <-----
 
+
 # -----> TABLE TAB PAGES AND FUNCTIONS <-----
 
-# Source: https://stackoverflow.com/questions/53425222/python-flask-i-want-to-display-the-data-that-present-in-mongodb-on-a-html-page
+# https://stackoverflow.com/questions/53425222/python-flask-i-want-to-display-the-data-that-present-in-mongodb-on-a-html-page
 @app.route('/dashboard/table')
 def table():
     projects = mongo.db.project_table.find({}, {"title": 1, "description": 1, "date": 1})
@@ -147,52 +180,6 @@ def table():
 
 
 # -----> END OF TABLE TAP PAGES FUNCTIONS <-----
-
-
-# -----> DATABASE FUNCTIONS <-----
-
-@app.route('/insert-one/<name>/<id>/', methods=['GET'])
-def insert_one(name, id_):
-    query_object = {
-        'Name': name,
-        'ID': id_
-    }
-    mongo.db.project_table.insert_one(query_object)
-    return "Query inserted...!!!"
-
-
-# To find all the entries/documents in a table/collection,
-# find() function is used. If you want to find all the documents
-# that matches a certain query, you can pass a queryObject as an
-# argument.
-@app.route('/find/', methods=['GET'])
-def find_all():
-    query = mongo.db.project_table.find()
-    output = {}
-    i = 0
-    for x in query:
-        output[i] = x
-        output[i].pop('_id')
-        i += 1
-    return jsonify(output)
-
-
-# To update a document in a collection, update_one()
-# function is used. The queryObject to find the document is passed as
-# the first argument, the corresponding updateObject is passed as the
-# second argument under the '$set' index.
-@app.route('/update/<key>/<value>/<element>/<updateValue>/', methods=['GET'])
-def update(key, value, element, update_value):
-    query_object = {key: value}
-    update_object = {element: update_value}
-    query = mongo.db.project_table.update_one(query_object, {'$set': update_object})
-    if query.acknowledged:
-        return "Update Successful"
-    else:
-        return "Update Unsuccessful"
-
-
-# -----> END OF DATABASE FUNCTIONS <-----
 
 
 # https://stackoverflow.com/a/63216793
