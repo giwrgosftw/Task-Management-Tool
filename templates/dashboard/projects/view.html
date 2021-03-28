@@ -44,9 +44,26 @@
                                 <td><input value="{{task.title}}" id='title' name="title" class="form-control"/></td>
                                 <td><input value="{{task.description}}" id='description' name="description" class="form-control"/></td>
                                 <td><input type="date" value="{{task.date}}" id='date' name="date" class="form-control"/></td>
-                                <td><select size="1" id="users" name="users" class='form-control'>
-                                    <option value="Richard"> Richard Guaman</option>
-                                    <option value="Georgios"> Georgios Karanasios</option>
+                                <td><select size="1" id="assign_to" name="assign_to" class='form-control'>
+
+                                    <!-- set up the order of the "assign to" users list -->
+                                    {% if task.assign_to!="" %}
+                                        <option value='{{task.assign_to}}'> {{task.assign_to}} </option> <!-- the already selected option -->
+                                        {% for user in users%} <!-- all user of the users table -->
+                                            {% if user["fullname"]!=task.assign_to and user["fullname"]!="" %} <!-- avoid duplicates in the list -->
+                                            <option value='{{user["fullname"]}}'> {{user["fullname"]}} </option>
+                                            {% endif %}
+                                        {% endfor %}
+                                        <option value=""> </option> <!-- no one is assigned option -->
+                                    {% else %}
+                                        <option value=""> </option> <!-- no one is assigned option -->
+                                        {% for user in users%} <!-- all user of the users table -->
+                                            {% if user["fullname"]!=task.assign_to and user["fullname"]!="" %} <!-- avoid duplicates in the list -->
+                                                <option value='{{user["fullname"]}}'> {{user["fullname"]}} </option>
+                                            {% endif %}
+                                        {% endfor %}
+                                    {% endif %}
+
                                 </select></td>
                                 <td><button style=margin-top:10px; type="submit" class="btn btn-primary" formaction= "{{ url_for('update_task', project_id=project._id, task_id=task._id) }}" > Update </button></td>
                                 <td><button style=margin-top:10px; type="submit" class="btn btn-danger" formaction= "{{ url_for('delete_task', project_id=project._id, task_id=task._id) }}"> Delete </button></td>

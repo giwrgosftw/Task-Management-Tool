@@ -109,9 +109,10 @@ def view_project(project_id):
     project = mongo.db.project_table.find_one_or_404({'_id': project_id})
     task = mongo.db.task_table.find_one_or_404({'project_id': project_id})
 
-    tasks = mongo.db.task_table.find({}, {"title": 1, "description": 1, "date": 1})
+    tasks = mongo.db.task_table.find({}, {"title": 1, "description": 1, "date": 1, "assign_to": 1})
+    users = mongo.db.users.find({}, {"fullname": 1})
 
-    return render_template('dashboard/projects/view.html', project=project, task=task, tasks=tasks)
+    return render_template('dashboard/projects/view.html', project=project, task=task, tasks=tasks, users=users)
 
 
 # Update Project details
@@ -147,7 +148,8 @@ def insert_new_empty_task(project_id):
             "title": "",
             "description": "",
             "date": "",
-            "project_id": project_id
+            "project_id": project_id,
+            "assign_to": ""
         }
     )
 
@@ -160,18 +162,19 @@ def insert_new_empty_task(project_id):
 # Thus, (from the app.py) project_id=project_id and task_id=task_id <--> project_id=project._id and task_id=task._id (from the html file)
 
 # Update the Project's task details
-@app.route('/dashboard/projects/<ObjectId:project_id>/<ObjectId:task_id>', methods=['POST'])
+@app.route('/dashboard/projects/<ObjectId:project_id>/update/<ObjectId:task_id>', methods=['POST'])
 def update_task(project_id, task_id):
     task_collection = mongo.db.task_table
     task_collection.find_one_and_update({"_id": task_id},
                                         {"$set": {
                                             "title": request.form.get('title'),
                                             "description": request.form.get('description'),
-                                            "date": request.form.get('date')
+                                            "date": request.form.get('date'),
+                                            "assign_to": request.form.get('assign_to')
                                         }
                                         })
 
-    return redirect(url_for('view_project', project_id=project_id, task_id=task_id))
+    return redirect(url_for('view_project', project_id=project_id))
 
 
 # Delete a task
@@ -182,14 +185,15 @@ def delete_task(project_id, task_id):
     results = list(cur)
 
     # Checking the cursor has at least 1 element
-    # If there is only one task in the table, do not remove it because there will be an issue, just clear it
+    # If there is only one task in the table, do not remove it because there will be an issue, just clear it ($unset could be an option)
     # else remove completely the requested task
     if len(results) == 1:
         task_collection.find_one_and_update({"_id": task_id},
-                                            {"$unset": {
-                                                "title": 1,  # 1 = yes, clear that
-                                                "description": 1,
-                                                "date": 1
+                                            {"$set": {
+                                                "title": "",
+                                                "description": "",
+                                                "date": "",
+                                                "assign_to": ""
                                             }
                                             })
     else:
