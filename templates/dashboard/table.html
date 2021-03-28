@@ -27,7 +27,7 @@
                     <tbody>
                     {% for project in projects %}
                     <tr>
-                        <td> <a href="{{ '/dashboard/projects/view/%s'%project["_id"] }}"> {{project["title"]}} </a> </td>
+                        <td> <a href="{{ '/dashboard/projects/%s'%project["_id"] }}"> {{project["title"]}} </a> </td>
                         <td>{{project["description"]}}</td>
                         <td>{{project["date"]}}</td>
                     </tr>

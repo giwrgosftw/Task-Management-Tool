@@ -23,6 +23,8 @@
             <!-- https://datatables.net/examples/api/form.html -->
             <div class="card-body">
                 <div class="table-responsive">
+                    <button style=margin-bottom:10px; type="submit" class="btn btn-success" formaction= "{{ url_for('insert_new_empty_task', project_id=project._id) }}"> Add new task </button>
+
                     <table class="table table-bordered" width="100%" cellspacing="0">
                         <thead>
                         <tr>

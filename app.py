@@ -7,7 +7,6 @@ from mongodb_models import settings_mongo
 from bson import ObjectId
 
 app = Flask(__name__)
-app.secret_key = "my_secret_key"
 mongo = settings_mongo.config_mongo_db_with_app(app)
 
 
@@ -76,12 +75,13 @@ def dashboard():
     return render_template('dashboard/home.html', projects=projects)  # https://startbootstrap.com/template/sb-admin
 
 
-@app.route('/dashboard/projects/new', methods=['POST', 'GET'])
+@app.route('/dashboard/projects/new_project', methods=['POST', 'GET'])
 def create_new_project():
-    if request.method == 'POST':
 
-        # https://docs.mongodb.com/manual/reference/database-references/
-        project_id = ObjectId()  # setup the project's id
+    # https://docs.mongodb.com/manual/reference/database-references/
+    project_id = ObjectId()  # setup the project's id
+
+    if request.method == 'POST':
 
         project_collection = mongo.db.project_table  # project collection
         task_collection = mongo.db.task_table  # task collection
@@ -97,23 +97,23 @@ def create_new_project():
                                         'date': request.form['task_date'],
                                         'project_id': project_id})
 
-            # As soon as we made the changes we want to redirect (else the url link will not change)
             return redirect(url_for('table'))
 
         return 'That project already exists!'
 
-    # This is when we press the view option for first time
-    return render_template('dashboard/projects/new.html')
+    return render_template('dashboard/projects/new.html', project=project_id)
 
 
 # View a Project
-@app.route('/dashboard/projects/view/<ObjectId:project_id>', methods=['GET'])
+@app.route('/dashboard/projects/<ObjectId:project_id>', methods=['GET'])
 def view_project(project_id):
     # Check if the project exists in the db table based on the id
     project = mongo.db.project_table.find_one_or_404({'_id': project_id})
     task = mongo.db.task_table.find_one_or_404({'project_id': project_id})
 
-    return render_template('dashboard/projects/view.html', project=project, task=task)
+    tasks = mongo.db.task_table.find({}, {"title": 1, "description": 1, "date": 1})
+
+    return render_template('dashboard/projects/view.html', project=project, task=task, tasks=tasks)
 
 
 # Update Project details
@@ -127,6 +127,7 @@ def update_project(project_id):
                                                "date": request.form.get('date')
                                            }
                                            })
+
     return redirect(url_for('table', project_id=project_id))
 
 
@@ -139,9 +140,30 @@ def delete_project(project_id):
     return redirect(url_for('table'))
 
 
-# Update Project details
-@app.route('/dashboard/projects/update1/<ObjectId:task_id>', methods=['POST'])
-def update_task(task_id):
+# Add an empty task in the project's table
+@app.route('/dashboard/projects/<ObjectId:project_id>/new_empty_task', methods=['POST'])
+def insert_new_empty_task(project_id):
+    task_collection = mongo.db.task_table
+    task_collection.insert_one(
+        {
+            "title": "",
+            "description": "",
+            "date": "",
+            "project_id": project_id
+        }
+    )
+
+    return redirect(url_for('view_project', project_id=project_id))
+
+
+# HOW IT WORKS:
+# <ObjectId:project_id> and <ObjectId:task_id> = project_id, task_id of the update_task(), respectively
+# Then, using the redirect(url_for()) we are taking the project and task id values which are coming from the html file
+# Thus, (from the app.py) project_id=project_id and task_id=task_id <--> project_id=project._id and task_id=task._id (from the html file)
+
+# Update the Project's task details
+@app.route('/dashboard/projects/<ObjectId:project_id>/<ObjectId:task_id>', methods=['POST'])
+def update_task(project_id, task_id):
     task_collection = mongo.db.task_table
     task_collection.find_one_and_update({"_id": task_id},
                                         {"$set": {
@@ -150,30 +172,32 @@ def update_task(task_id):
                                             "date": request.form.get('date')
                                         }
                                         })
-    project_id_dict = task_collection.find_one({'_id': task_id}, {'project_id': 1, '_id': 0})  # gives e.g, {'project_id': ObjectId('6060530cf082cd618caaad54')}
-    project_id_string = str(project_id_dict)  # we want to take only the substring which is inside the parenthesis (the id), but it will be easier to convert the whole dict to a string
-    project_id = project_id_string[project_id_string.find("(") + 1:project_id_string.find(")")].replace("'", "")  # gives '6060530cf082cd618caaad54' and then 6060530cf082cd618caaad54
 
-    return redirect(url_for('view_project', project_id=project_id))
+    return redirect(url_for('view_project', project_id=project_id, task_id=task_id))
 
 
 # Delete a task
-@app.route('/dashboard/projects/delete1/<ObjectId:task_id>', methods=['POST'])
-def clear_task_fields(task_id):
+@app.route('/dashboard/projects/<ObjectId:project_id>/delete/<ObjectId:task_id>', methods=['POST'])
+def delete_task(project_id, task_id):
     task_collection = mongo.db.task_table
-    task_collection.find_one_and_update({"_id": task_id},
-                                        {"$set": {
-                                            "title": "",
-                                            "description": "",
-                                            "date": ""
-                                        }
-                                        })
+    cur = mongo.db.task_table.find()
+    results = list(cur)
 
-    project_id_dict = task_collection.find_one({'_id': task_id}, {'project_id': 1, '_id': 0})  # gives e.g, {'project_id': ObjectId('6060530cf082cd618caaad54')}
-    project_id_string = str(project_id_dict)  # we want to take only the substring which is inside the parenthesis (the id), but it will be easier to convert the whole dict to a string
-    project_id = project_id_string[project_id_string.find("(") + 1:project_id_string.find(")")].replace("'", "")  # gives '6060530cf082cd618caaad54' and then 6060530cf082cd618caaad54
+    # Checking the cursor has at least 1 element
+    # If there is only one task in the table, do not remove it because there will be an issue, just clear it
+    # else remove completely the requested task
+    if len(results) == 1:
+        task_collection.find_one_and_update({"_id": task_id},
+                                            {"$unset": {
+                                                "title": 1,  # 1 = yes, clear that
+                                                "description": 1,
+                                                "date": 1
+                                            }
+                                            })
+    else:
+        task_collection.remove({"_id": task_id})
 
-    return redirect(url_for('view_project', project_id=project_id))
+    return redirect(url_for('view_project', project_id=project_id, task_id=task_id, ))
 
 
 # -----> END OF DASHBOARD PAGES AND FUNCTIONS <-----

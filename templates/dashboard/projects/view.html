@@ -25,6 +25,7 @@
             <form method="POST">
                     <div class="card-body">
                     <div class="table-responsive">
+                        <button style=margin-bottom:10px; type="submit" class="btn btn-success" formaction= "{{ url_for('insert_new_empty_task', project_id=project._id) }}"> Add new task </button>
                         <table class="table table-bordered" width="100%" cellspacing="0">
                             <thead>
                             <tr>
@@ -37,18 +38,19 @@
                             </tr>
                             </thead>
                             <tbody>
+                            {% for task in tasks %}
                             <tr>
                                 <td><input value="{{task.title}}" id='title' name="title" class="form-control"/></td>
                                 <td><input value="{{task.description}}" id='description' name="description" class="form-control"/></td>
                                 <td><input type="date" value="{{task.date}}" id='date' name="date" class="form-control"/></td>
                                 <td><select size="1" id="users" name="users" class='form-control'>
-                                    <option value="Richard"> Richard</option>
-                                    <option value="Georgios"> Georgios</option>
+                                    <option value="Richard"> Richard Guaman</option>
+                                    <option value="Georgios"> Georgios Karanasios</option>
                                 </select></td>
-                                <td><button style=margin-top:10px; type="submit" class="btn btn-primary" formaction= "{{ url_for('update_task', task_id=task._id) }}" > Update </button></td>
-                                <td><button style=margin-top:10px; type="submit" class="btn btn-danger" formaction= "{{ url_for('clear_task_fields', task_id=task._id) }}"> Delete </button></td>
+                                <td><button style=margin-top:10px; type="submit" class="btn btn-primary" formaction= "{{ url_for('update_task', project_id=project._id, task_id=task._id) }}" > Update </button></td>
+                                <td><button style=margin-top:10px; type="submit" class="btn btn-danger" formaction= "{{ url_for('delete_task', project_id=project._id, task_id=task._id) }}"> Delete </button></td>
                             </tr>
-
+                            {% endfor %}
                             </tbody>
                             <tfoot>
                             <tr>
