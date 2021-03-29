@@ -1,0 +1,33 @@
+{% extends "dashboard/base.html" %}
+
+{% block content %}
+<div id="layoutSidenav">
+    <div id="layoutSidenav_content">
+        <form method="POST" action="{{ url_for('create_new_task', project_id=project._id) }}">
+            <div class='container-fluid'>
+                <label style=margin-top:10px; for='task_title'>Task Subject</label> <!-- following the examples of https://getbootstrap.com/docs/4.3/components/forms/ -->
+                <input type='text' id='task_title' name="task_title" class='form-control'/>
+            </div>
+            <div class="container-fluid">
+                <label style=margin-top:10px; for="task_description">Description</label>
+                <textarea class="form-control" name="task_description" id="task_description" rows="3"></textarea>
+            </div>
+            <div class="container-fluid">
+                <label style=margin-top:10px; for="task_date">Deadline</label>
+                <input style=width:21%; type='date' id='task_date' name="task_date" class='form-control'/>
+            </div>
+            <div class="container-fluid">
+                <label style=margin-top:10px; for="task_assign_to">Assign_to</label>
+                <select style=width:21%; size="1" id="task_assign_to" name="task_assign_to" class='form-control'>
+                    {% for user in users%} <!-- all user of the users table -->
+                        <option value='{{user["fullname"]}}'> {{user["fullname"]}} </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="container-fluid">
+                <button style=margin-top:15px; type="submit" class="btn btn-primary">Submit </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
