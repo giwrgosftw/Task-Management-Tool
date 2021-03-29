@@ -93,8 +93,8 @@ def create_new_project():
                                            'title': request.form['project_title'],
                                            'description': request.form['project_description'],
                                            'date': request.form['project_date']})
-            # As soon as the project is created, the next step will be to add a new empty task
-            # so that the user to be able to add details there
+            # As soon as the project is created, the next step will be to add a new empty task to avoid the 404 issue
+            # this will be deleted as soon as the user will add a new task
             insert_new_empty_task(project_id)
 
             return redirect(url_for('view_project', project_id=project_id))
@@ -111,7 +111,7 @@ def view_project(project_id):
     project = mongo.db.project_table.find_one_or_404({'_id': project_id})
     task = mongo.db.task_table.find_one_or_404({'project_id': project_id})
 
-    tasks = mongo.db.task_table.find({}, {"title": 1, "description": 1, "date": 1, "assign_to": 1})
+    tasks = mongo.db.task_table.find({}, {"title": 1, "description": 1, "date": 1, "assign_to": 1, "project_id": 1})
     users = mongo.db.users.find({}, {"fullname": 1})
 
     return render_template('dashboard/projects/view.html', project=project, task=task, tasks=tasks, users=users)
@@ -178,6 +178,7 @@ def create_new_task(project_id):
                 "project_id": project_id,
             }
         )
+        task_collection.remove({'project_id': project_id, 'title': ""})  # delete now the auto-created empty task of this project
 
         return redirect(url_for('view_project', project_id=project_id, task_id=task_id))
 
@@ -187,7 +188,6 @@ def create_new_task(project_id):
 # View a project's task
 @app.route('/dashboard/projects/<ObjectId:project_id>/<ObjectId:task_id>', methods=['GET'])
 def view_task(project_id, task_id):
-
     # Check if the project and task exists in the db table based on the id
     project = mongo.db.project_table.find_one_or_404({'_id': project_id})
     task = mongo.db.task_table.find_one_or_404({'_id': task_id})
