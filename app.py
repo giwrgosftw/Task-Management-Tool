@@ -75,9 +75,11 @@ def dashboard():
     return render_template('dashboard/home.html', projects=projects)  # https://startbootstrap.com/template/sb-admin
 
 
+# -----> END DASHBOARD PAGES <-----
+
+# -----> PROJECTS PAGES AND FUNCTIONS <-----
 @app.route('/dashboard/projects/new_project', methods=['POST', 'GET'])
 def create_new_project():
-
     if request.method == 'POST':
 
         # https://docs.mongodb.com/manual/reference/database-references/
@@ -156,13 +158,54 @@ def insert_new_empty_task(project_id):
     return redirect(url_for('view_project', project_id=project_id))
 
 
+# -----> END OF PROJECTS PAGES AND FUNCTIONS<-----
+
+# Add new task in the project's table
+@app.route('/dashboard/projects/<ObjectId:project_id>/new_task', methods=['POST', 'GET'])
+def create_new_task(project_id):
+    project = mongo.db.project_table.find_one_or_404({'_id': project_id})
+    users = mongo.db.users.find({}, {"fullname": 1})
+    if request.method == 'POST':
+        task_id = ObjectId()
+        task_collection = mongo.db.task_table
+        task_collection.insert_one(
+            {
+                "_id": task_id,
+                'title': request.form['task_title'],
+                'description': request.form['task_description'],
+                'date': request.form['task_date'],
+                "assign_to": request.form['task_assign_to'],
+                "project_id": project_id,
+            }
+        )
+
+        return redirect(url_for('view_project', project_id=project_id, task_id=task_id))
+
+    return render_template('dashboard/tasks/new.html', project=project, users=users)
+
+
+# View a project's task
+@app.route('/dashboard/projects/<ObjectId:project_id>/<ObjectId:task_id>', methods=['GET'])
+def view_task(project_id, task_id):
+
+    # Check if the project and task exists in the db table based on the id
+    project = mongo.db.project_table.find_one_or_404({'_id': project_id})
+    task = mongo.db.task_table.find_one_or_404({'_id': task_id})
+
+    tasks = mongo.db.task_table.find({}, {"title": 1, "description": 1, "date": 1, "assign_to": 1})
+    users = mongo.db.users.find({}, {"fullname": 1})
+
+    return render_template('dashboard/tasks/view.html', project=project, task=task, tasks=tasks, users=users)
+
+
+# -----> TASKS PAGES AND FUNCTIONS <-----
 # HOW IT WORKS:
 # <ObjectId:project_id> and <ObjectId:task_id> = project_id, task_id of the update_task(), respectively
 # Then, using the redirect(url_for()) we are taking the project and task id values which are coming from the html file
 # Thus, (from the app.py) project_id=project_id and task_id=task_id <--> project_id=project._id and task_id=task._id (from the html file)
 
 # Update the Project's task details
-@app.route('/dashboard/projects/<ObjectId:project_id>/update/<ObjectId:task_id>', methods=['POST'])
+@app.route('/dashboard/projects/<ObjectId:project_id>/<ObjectId:task_id>/update', methods=['POST'])
 def update_task(project_id, task_id):
     task_collection = mongo.db.task_table
     task_collection.find_one_and_update({"_id": task_id},
@@ -202,7 +245,7 @@ def delete_task(project_id, task_id):
     return redirect(url_for('view_project', project_id=project_id, task_id=task_id, ))
 
 
-# -----> END OF DASHBOARD PAGES AND FUNCTIONS <-----
+# -----> TASKS PAGES AND FUNCTIONS <-----
 
 
 # -----> TABLE TAB PAGES AND FUNCTIONS <-----
