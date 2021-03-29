@@ -40,14 +40,18 @@
                             </thead>
                             <tbody>
                             {% for task in tasks %}
-                            <tr>
-                                <td> <a href="{{ '/dashboard/projects/%s'%project["_id"] + '/%s'%task["_id"] }}"> {{task["title"]}} </a> </td>
-                                <td>{{task["description"]}}</td>
-                                <td>{{task["date"]}}</td>
-                                <td>{{task["assign_to"]}}</td>
-                                <td class="text-center"><a href="{{ '/dashboard/projects/%s'%project["_id"] + '/%s'%task["_id"] }}" class="btn btn-primary" role="button">Edit</a></td>
-                                <td class="text-center"><button type="submit" class="btn btn-danger" formaction="{{ url_for('delete_task', project_id=project._id, task_id=task._id) }}"> Delete </button></td>
-                            </tr>
+                                {% if task["project_id"] == project._id%} <!-- we want to display only the tasks which belong to the specific id -->
+                                    {% if task["title"] != ""%} <!-- we also want to hide the auto-created empty task -->
+                                        <tr>
+                                            <td> <a href="{{ '/dashboard/projects/%s'%project["_id"] + '/%s'%task["_id"] }}"> {{task["title"]}} </a> </td>
+                                            <td>{{task["description"]}}</td>
+                                            <td>{{task["date"]}}</td>
+                                            <td>{{task["assign_to"]}}</td>
+                                            <td class="text-center"><a href="{{ '/dashboard/projects/%s'%project["_id"] + '/%s'%task["_id"] }}" class="btn btn-primary" style=height:35px; role="button">Edit</a></td>
+                                            <td class="text-center"><button type="submit" class="btn btn-danger" style=height:35px; formaction="{{ url_for('delete_task', project_id=project._id, task_id=task._id) }}"> Delete </button></td>
+                                        </tr>
+                                    {% endif %}
+                                {% endif %}
                             {% endfor %}
                             </tbody>
                             <tfoot>
