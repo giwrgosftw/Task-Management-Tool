@@ -11,7 +11,7 @@
                     <input value="{{task.title}}" id='title' name="title" class="form-control"/>
 
                     <label style=margin-top:30px;>Description</label>
-                    <input value="{{task.description}}" id='description' name="description" class="form-control"/>
+                    <textarea rows="3" id='description' name="description" class="form-control">{{task.description}}</textarea>
 
                     <label style=margin-top:30px;>Deadline</label>
                     <input style=width:21%; type="date" value="{{task.date}}" id='date' name="date" class="form-control"/>
