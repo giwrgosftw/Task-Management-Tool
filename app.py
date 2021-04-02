@@ -1,8 +1,8 @@
 import os
 import webbrowser
 import bcrypt
-
-from flask import Flask, render_template, request, url_for, session, redirect, flash
+from email_validator import validate_email, EmailNotValidError
+from flask import Flask, render_template, request, url_for, session, redirect, flash, Response
 from mongodb_models import settings_mongo
 from bson import ObjectId
 
@@ -23,24 +23,33 @@ def welcome_login():
 def login():
     users = mongo.db.users  # connect to the db from the settings module and then rendering the users table
     login_user = users.find_one({'email': request.form['email']})  # true/false if the e-mail exists
-
+    error = None
     # if e-mail exist, check if the password is correct, if correct, navigate me to the dashboard page
     if login_user:
-        if bcrypt.hashpw(request.form['password'].encode('utf-8'), login_user['password']) == login_user['password']:
+        if bcrypt.hashpw(request.form['password'].encode('utf-8'), login_user['password']) != login_user['password']:
+            error = 'Invalid credentials'
+            # session['active_user'] = request.form['email']
+            # flash('You were successfully logged in')
+            # return redirect(url_for('dashboard'))
+        else:
             session['active_user'] = request.form['email']
+            flash('You were successfully logged in')
             return redirect(url_for('dashboard'))
-
-    return 'Invalid username or password'
+            # error = 'Invalid credentials'
+            # flash('You test d in')
+    else:
+        error = 'Account not found, please create one'
+    return render_template('login.html', error=error)
 
 
 # Registration process (+ checking if the account already exists)
 # Source: https://www.youtube.com/watch?v=vVx1737auSE&list=PLXmMXHVSvS-Db9KK1LA7lifcyZm4c-rwj&index=5
 @app.route('/register', methods=['POST', 'GET'])
 def register():
+    error = None
     if request.method == 'POST':
         users = mongo.db.users
         existing_user = users.find_one({'email': request.form['email']})
-
         if existing_user is None:
             hash_pass = bcrypt.hashpw(request.form['password'].encode('utf-8'), bcrypt.gensalt())
             users.insert_one(
@@ -48,10 +57,9 @@ def register():
                  'password': hash_pass})
             session['active_session'] = request.form['email']
             return redirect(url_for('welcome_login'))  # account created successfully navigate me to the login page
-
-        return 'That username already exists!'
-
-    return render_template('register.html')
+        else:
+            error = 'This account already exists!'
+    return render_template('register.html', error=error)
 
 
 @app.route('/password')
@@ -74,14 +82,16 @@ def logout():
 @app.route('/dashboard')
 def dashboard():
     if "active_user" in session:  # checking if active user exist in the session (cookies)
-        user = session["active_user"]
-        print(user)  # you can use this variable to check the username who is loged in during a session (remove the comment)
+        active_user = session["active_user"]
+        print(active_user)  # use this variable to check the email who is loged in during a session (remove the comment)
         projects = mongo.db.project_table.find({}, {"title": 1, "description": 1, "date": 1})
-        return render_template('dashboard/home.html',projects=projects)  # https://startbootstrap.com/template/sb-admin
+        return render_template('dashboard/home.html', projects=projects)  # https://startbootstrap.com/template/sb-admin
     else:
+        error = 'Invalid credentials'
+        print(error)
         session.clear()
         flash(u'You need to login', 'error')
-        return render_template('login.html')
+        return render_template('login.html', error=error)
 
 
 # -----> END DASHBOARD PAGES <-----
