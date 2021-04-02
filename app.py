@@ -2,11 +2,12 @@ import os
 import webbrowser
 import bcrypt
 
-from flask import Flask, render_template, request, url_for, session, redirect
+from flask import Flask, render_template, request, url_for, session, redirect, flash
 from mongodb_models import settings_mongo
 from bson import ObjectId
 
 app = Flask(__name__)
+app.secret_key = "my_secret_key"
 mongo = settings_mongo.config_mongo_db_with_app(app)
 
 
@@ -26,7 +27,7 @@ def login():
     # if e-mail exist, check if the password is correct, if correct, navigate me to the dashboard page
     if login_user:
         if bcrypt.hashpw(request.form['password'].encode('utf-8'), login_user['password']) == login_user['password']:
-            session['email'] = request.form['email']
+            session['active_user'] = request.form['email']
             return redirect(url_for('dashboard'))
 
     return 'Invalid username or password'
@@ -45,7 +46,7 @@ def register():
             users.insert_one(
                 {'fullname': request.form['fullname'], 'email': request.form['email'],
                  'password': hash_pass})
-            session['email'] = request.form['email']
+            session['active_session'] = request.form['email']
             return redirect(url_for('welcome_login'))  # account created successfully navigate me to the login page
 
         return 'That username already exists!'
@@ -61,7 +62,8 @@ def forgot_password():
 # Logout means: send me back to the login page (for now)
 @app.route('/logout')
 def logout():
-    return redirect(url_for('welcome_login'))
+    session.clear()
+    return redirect('/')
 
 
 # -----> END OF OUTSIDE DASHBOARD PAGES AND FUNCTIONS <-----
@@ -71,8 +73,15 @@ def logout():
 
 @app.route('/dashboard')
 def dashboard():
-    projects = mongo.db.project_table.find({}, {"title": 1, "description": 1, "date": 1})
-    return render_template('dashboard/home.html', projects=projects)  # https://startbootstrap.com/template/sb-admin
+    if "active_user" in session:  # checking if active user exist in the session (cookies)
+        user = session["active_user"]
+        print(user)  # you can use this variable to check the username who is loged in during a session (remove the comment)
+        projects = mongo.db.project_table.find({}, {"title": 1, "description": 1, "date": 1})
+        return render_template('dashboard/home.html',projects=projects)  # https://startbootstrap.com/template/sb-admin
+    else:
+        session.clear()
+        flash(u'You need to login', 'error')
+        return render_template('login.html')
 
 
 # -----> END DASHBOARD PAGES <-----

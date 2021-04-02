@@ -24,11 +24,11 @@
                                             <form method="POST" action="{{ url_for('login') }}">
                                                 <div class="form-group">
                                                     <label class="small mb-1" for="inputEmailAddress">Email</label>
-                                                    <input class="form-control py-4" id="inputEmailAddress" name="email" placeholder="Enter email address" />
+                                                    <input class="form-control py-4" id="inputEmailAddress" name="email" placeholder="Enter email address" required />
                                                 </div>
                                                 <div class="form-group">
                                                     <label class="small mb-1" for="inputPassword">Password</label>
-                                                    <input class="form-control py-4" id="inputPassword" type="password" name="password" placeholder="Enter password" />
+                                                    <input class="form-control py-4" id="inputPassword" type="password" name="password" placeholder="Enter password" required/>
                                                 </div>
                                                 <div class="form-group">
                                                     <div class="custom-control custom-checkbox">
@@ -65,3 +65,15 @@
         <script src="{{ url_for('static', filename='dist/js/scripts.js') }}"></script>
     </body>
 </html>
+{% with errors = get_flashed_messages(category_filter=["error"]) %}
+{% if errors %}
+<div class="alert-message block-message error">
+  <a class="close" href="#">×</a>
+  <ul>
+    {%- for msg in errors %}
+    <li>{{ msg }}</li>
+    {% endfor -%}
+  </ul>
+</div>
+{% endif %}
+{% endwith %}

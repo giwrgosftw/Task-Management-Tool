@@ -23,23 +23,23 @@
                                             <form method="POST" action="{{ url_for('register') }}">
                                             <div class="form-group">
                                                 <label class="small mb-1" for="inputFullName">Full name</label>
-                                                <input class="form-control py-4" id="inputFullName" name="fullname" placeholder="Enter full name" />
+                                                <input class="form-control py-4" id="inputFullName" name="fullname" placeholder="Enter full name" required/>
                                             </div>
                                             <div class="form-group">
                                                 <label class="small mb-1" for="inputEmailAddress">Email</label>
-                                                <input class="form-control py-4" id="inputEmailAddress" name="email" aria-describedby="emailHelp" placeholder="Enter email address" />
+                                                <input class="form-control py-4" id="inputEmailAddress" name="email" aria-describedby="emailHelp" placeholder="Enter email address" required />
                                             </div>
                                             <div class="form-row">
                                                 <div class="col-md-6">
                                                     <div class="form-group">
                                                         <label class="small mb-1" for="inputPassword">Password</label>
-                                                        <input class="form-control py-4" id="inputPassword" name="password" placeholder="Enter password" />
+                                                        <input class="form-control py-4" id="inputPassword" name="password" placeholder="Enter password" required/>
                                                     </div>
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="form-group">
                                                         <label class="small mb-1" for="inputConfirmPassword">Confirm Password</label>
-                                                        <input class="form-control py-4" id="inputConfirmPassword" name="password" placeholder="Confirm password" />
+                                                        <input class="form-control py-4" id="inputConfirmPassword" name="password" placeholder="Confirm password" required/>
                                                     </div>
                                                 </div>
                                             </div>
