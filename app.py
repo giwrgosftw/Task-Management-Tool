@@ -105,7 +105,7 @@ def create_new_project():
         project_id = ObjectId()  # setup the project's id
 
         project_collection = mongo.db.project_table  # project collection
-        existing_project = project_collection.find_one({'title': request.form['project_title']})
+        existing_project = project_collection.find_one({'title': request.form['project_title']})  # check if the project already exists based on the title
 
         if existing_project is None:
             project_collection.insert_one({"_id": project_id,
@@ -115,7 +115,7 @@ def create_new_project():
                                            'status': "Not started",
                                            })
             # As soon as the project is created, the next step will be to add a new empty task to avoid the 404 issue
-            # this will be deleted as soon as the user will add a new task
+            # this will be deleted when the user adds the first task
             insert_new_empty_task(project_id)
 
             return redirect(url_for('view_project', project_id=project_id))
@@ -310,7 +310,7 @@ def table_emergency():
     return render_template('dashboard/categories/emergency.html', projects=projects)
 
 
-# -----> END OF TABLE TAP PAGES FUNCTIONS <-----
+# -----> END OF TABLE TAB PAGES FUNCTIONS <-----
 
 
 # https://stackoverflow.com/a/63216793
