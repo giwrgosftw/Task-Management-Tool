@@ -175,7 +175,8 @@ def insert_new_empty_task(project_id):
             "description": "",
             "date": "",
             "project_id": project_id,
-            "assign_to": ""
+            "assign_to": "",
+            "status": ""
         }
     )
 
