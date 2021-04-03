@@ -1,13 +1,11 @@
 import os
 import webbrowser
 import bcrypt
-from email_validator import validate_email, EmailNotValidError
-from flask import Flask, render_template, request, url_for, session, redirect, flash, Response
+from flask import Flask, render_template, request, url_for, session, redirect, flash
 from mongodb_models import settings_mongo
 from bson import ObjectId
 
 app = Flask(__name__)
-app.secret_key = "my_secret_key"
 mongo = settings_mongo.config_mongo_db_with_app(app)
 
 
@@ -23,7 +21,6 @@ def welcome_login():
 def login():
     users = mongo.db.users  # connect to the db from the settings module and then rendering the users table
     login_user = users.find_one({'email': request.form['email']})  # true/false if the e-mail exists
-    error = None
     # if e-mail exist, check if the password is correct, if correct, navigate me to the dashboard page
     if login_user:
         if bcrypt.hashpw(request.form['password'].encode('utf-8'), login_user['password']) != login_user['password']:
