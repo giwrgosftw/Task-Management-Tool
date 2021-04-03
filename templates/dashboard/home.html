@@ -15,7 +15,7 @@
                         <div class="card bg-primary text-white mb-4">
                             <div class="card-body">Projects not started</div>
                             <div class="card-footer d-flex align-items-center justify-content-between">
-                                <a class="small text-white stretched-link" href="#">View Details</a>
+                                <a class="small text-white stretched-link" href="/dashboard/table/not-started">View Details</a>
                                 <div class="small text-white"><i class="fas fa-angle-right"></i></div>
                             </div>
                         </div>
@@ -24,7 +24,7 @@
                         <div class="card bg-warning text-white mb-4">
                             <div class="card-body">Project in-progress</div>
                             <div class="card-footer d-flex align-items-center justify-content-between">
-                                <a class="small text-white stretched-link" href="#">View Details</a>
+                                <a class="small text-white stretched-link" href="/dashboard/table/in-progress">View Details</a>
                                 <div class="small text-white"><i class="fas fa-angle-right"></i></div>
                             </div>
                         </div>
@@ -33,7 +33,7 @@
                         <div class="card bg-success text-white mb-4">
                             <div class="card-body">Projects Completed</div>
                             <div class="card-footer d-flex align-items-center justify-content-between">
-                                <a class="small text-white stretched-link" href="#">View Details</a>
+                                <a class="small text-white stretched-link" href="/dashboard/table/completed">View Details</a>
                                 <div class="small text-white"><i class="fas fa-angle-right"></i></div>
                             </div>
                         </div>
@@ -42,7 +42,7 @@
                         <div class="card bg-danger text-white mb-4">
                             <div class="card-body">Emergency Projects</div>
                             <div class="card-footer d-flex align-items-center justify-content-between">
-                                <a class="small text-white stretched-link" href="#">View Details</a>
+                                <a class="small text-white stretched-link" href="/dashboard/table/emergency">View Details</a>
                                 <div class="small text-white"><i class="fas fa-angle-right"></i></div>
                             </div>
                         </div>
@@ -81,10 +81,12 @@
                                     <th>Title</th>
                                     <th>Description</th>
                                     <th>Deadline</th>
+                                    <th>Status</th>
                                 </tr>
                                 </thead>
                                 <tfoot>
                                 <tr>
+                                    <th></th>
                                     <th></th>
                                     <th></th>
                                     <th></th>
@@ -96,6 +98,7 @@
                                         <td><a href="{{ '/dashboard/projects/%s'%project["_id"] }}"> {{project["title"]}} </a></td>
                                         <td>{{project["description"]}}</td>
                                         <td>{{project["date"]}}</td>
+                                        <td>{{project["status"]}}</td>
                                     </tr>
                                 {% endfor %}
                                 </tbody>

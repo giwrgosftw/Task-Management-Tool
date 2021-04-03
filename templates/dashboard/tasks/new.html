@@ -17,7 +17,7 @@
                 <input style=width:21%; type='date' id='task_date' name="task_date" class='form-control'/>
             </div>
             <div class="container-fluid">
-                <label style=margin-top:10px; for="task_assign_to">Assign_to</label>
+                <label style=margin-top:10px; for="task_assign_to">Assign to:</label>
                 <select style=width:21%; size="1" id="task_assign_to" name="task_assign_to" class='form-control'>
                     {% for user in users%} <!-- all user of the users table -->
                         <option value='{{user["fullname"]}}'> {{user["fullname"]}} </option>
