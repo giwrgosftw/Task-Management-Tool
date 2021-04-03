@@ -10,11 +10,39 @@
                     <label>Title</label>
                     <input value="{{project.title}}" id='title' name="title" class="form-control"/>
 
-                    <label style=margin-top:30px;>Description</label>
+                    <label style=margin-top:20px;>Description</label>
                     <textarea rows="3" id='description' name="description" class="form-control">{{project.description}}</textarea>
 
-                    <label style=margin-top:30px;>Deadline</label>
-                    <input style=width:19%; type="date" value="{{project.date}}" id='date' name="date" class="form-control"/>
+                    <div class="card-group">
+
+                    <label style=margin-top:10px;>Deadline</label>
+                    <input style="width:19%; margin-top:35px; margin-left:-62px;" type="date" value="{{project.date}}" id='date' name="date" class="form-control"/>
+
+                    <label style="margin-top:10px; margin-left:25px;" for="status">Status</label>
+                        <select style="width:150px; margin-top:35px; margin-left:-43px;" size="1" id='status' name="status" class='form-control'>
+
+                        <!-- Display first the status which the project has currently -->
+                        {% if project["status"] == "Not started"%}
+                            <option value='Not started' style=width:19%;> Not started </option>
+                            <option value='In-progress' style=width:19%;> In-progress </option>
+                            <option value='Completed' style=width:19%;> Completed </option>
+                            <option value='Emergency' style=width:19%;> Emergency </option>
+
+                        {% elif project["status"] == "In-progress"%}
+                            <option value='In-progress' style=width:19%;> In-progress </option>
+                            <option value='Completed' style=width:19%;> Completed </option>
+                            <option value='Emergency' style=width:19%;> Emergency </option>
+                            <option value='Not started' style=width:19%;> Not started </option>
+
+                        {% elif project["status"] == "Completed"%}
+                            <option value='Completed' style=width:19%;> Completed </option>
+                            <option value='Emergency' style=width:19%;> Emergency </option>
+                            <option value='Not started' style=width:19%;> Not started </option>
+                            <option value='In-progress' style=width:19%;> In-progress </option>
+                        {% endif %}
+
+                        </select>
+                    </div>
 
                     <button style=margin-top:12px; type="submit" class="btn btn-primary" formaction="{{ url_for('update_project', project_id=project._id) }}" >Update </button>
                     <button style=margin-top:12px; type="submit" class="btn btn-danger" formaction="{{ url_for('delete_project', project_id=project._id) }}"> Delete </button>
@@ -34,6 +62,7 @@
                                 <th>Small Description</th>
                                 <th>Deadline</th>
                                 <th>Assigned to</th>
+                                <th>Status</th>
                                 <th>Edit</th>
                                 <th>Delete</th>
                             </tr>
@@ -47,6 +76,7 @@
                                             <td>{{task["description"]}}</td>
                                             <td>{{task["date"]}}</td>
                                             <td>{{task["assign_to"]}}</td>
+                                            <td>{{task["status"]}}</td>
                                             <td class="text-center"><a href="{{ '/dashboard/projects/%s'%project["_id"] + '/%s'%task["_id"] }}" class="btn btn-primary" style=height:35px; role="button">Edit</a></td>
                                             <td class="text-center"><button type="submit" class="btn btn-danger" style=height:35px; formaction="{{ url_for('delete_task', project_id=project._id, task_id=task._id) }}"> Delete </button></td>
                                         </tr>
@@ -56,6 +86,7 @@
                             </tbody>
                             <tfoot>
                             <tr>
+                                <th></th>
                                 <th></th>
                                 <th></th>
                                 <th></th>
