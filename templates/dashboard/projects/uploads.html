@@ -1,0 +1,49 @@
+{% extends "dashboard/base.html" %}
+{% block content %}
+    <div id="layoutSidenav">
+        <div id="layoutSidenav_content">
+            <form method="POST" enctype="multipart/form-data">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <a style=margin-right:15px; class="btn btn-dark btn-sm" href="{{ '/dashboard/projects/%s'%project["_id"]}}" role="button">Go Back</a>
+                    <i class="fas fa-table mr-1"></i>
+                    <b> Your Project's Uploads DataTable (<u>Maximum File Size Limit 16MB</u>) </b>
+                </div>
+
+                <div class="card-body">
+                    <div class="table-responsive">
+
+                        <button style=" margin-bottom:20px;" type="submit" formaction="{{ url_for('upload_new_file', project_id=project._id) }}"> Upload </button>
+                        <input type="file" name="upload">
+
+                        <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                            <thead>
+                            <tr>
+                                <th>Filename</th>
+                                <th style=text-align:center;>Delete</th>
+                            </tr>
+                            </thead>
+                            <tfoot>
+                            <tr>
+                                <th></th>
+                                <th></th>
+                            </tr>
+                            </tfoot>
+                            <tbody>
+                            {% for upload in uploads %}
+                                {% if upload["project_id"] == project._id%}
+                                <tr>
+                                    <td> <a href="{{ url_for('download_file', project_id=project._id, filename=upload["filename"] ) }}"> {{upload["filename"]}} </a></td>
+                                    <td style="width:150px; text-align: center;"> <button style=margin-top:10px; type="submit" class="btn btn-danger" formaction= "{{ url_for('delete_file', project_id=project._id, upload_id=upload._id) }}"> Delete </button></td>
+                                </tr>
+                                {% endif %}
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            </form>
+        </div>
+    </div>
+{% endblock %}

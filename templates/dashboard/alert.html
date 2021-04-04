@@ -1,0 +1,14 @@
+{% extends "dashboard/base.html" %}
+{% block content %}
+    <div id="layoutSidenav">
+        <div id="layoutSidenav_content">
+            <div class="alert alert-success" role="alert" style="width:43%; margin-left:340px; margin-top:200px">
+                <h4 class="alert-heading">Well done! Sending you back...</h4>
+                <p>The file was downloaded successfully to your Downloads folder!</p>
+                <hr>
+                <p class="mb-0">You should be able to see a folder called "task-management-tool" with all the downloaded files</p>
+            </div>
+            <meta http-equiv="refresh" content="4;url={{ url_for('upload_table', project_id=project_id) }}" />
+        </div>
+    </div>
+{% endblock %}
