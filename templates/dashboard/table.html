@@ -3,6 +3,7 @@
 <div id="layoutSidenav">
     <div id="layoutSidenav_content">
     <div class="card mb-4">
+        <form method="POST">
         <div class="card-header">
             <i class="fas fa-table mr-1"></i>
             Your Projects DataTable
@@ -16,10 +17,12 @@
                         <th>Description</th>
                         <th>Deadline</th>
                         <th>Status</th>
+                        <th>Delete</th>
                     </tr>
                     </thead>
                     <tfoot>
                     <tr>
+                        <th></th>
                         <th></th>
                         <th></th>
                         <th></th>
@@ -33,12 +36,14 @@
                         <td>{{project["description"]}}</td>
                         <td>{{project["date"]}}</td>
                         <td>{{project["status"]}}</td>
+                        <td class="text-center"><button type="submit" class="btn btn-danger" style=height:35px; formaction="{{ url_for('delete_project', project_id=project._id) }}"> Delete </button></td>
                     </tr>
                     {% endfor %}
                     </tbody>
                 </table>
             </div>
         </div>
+        </form>
     </div>
     </div>
 </div>
