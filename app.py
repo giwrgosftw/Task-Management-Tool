@@ -1,13 +1,11 @@
 import os
 import webbrowser
 import bcrypt
-from email_validator import validate_email, EmailNotValidError
-from flask import Flask, render_template, request, url_for, session, redirect, flash, Response
+from flask import Flask, render_template, request, url_for, session, redirect, flash
 from mongodb_models import settings_mongo
 from bson import ObjectId
 
 app = Flask(__name__)
-app.secret_key = "my_secret_key"
 mongo = settings_mongo.config_mongo_db_with_app(app)
 
 
@@ -23,7 +21,6 @@ def welcome_login():
 def login():
     users = mongo.db.users  # connect to the db from the settings module and then rendering the users table
     login_user = users.find_one({'email': request.form['email']})  # true/false if the e-mail exists
-    error = None
     # if e-mail exist, check if the password is correct, if correct, navigate me to the dashboard page
     if login_user:
         if bcrypt.hashpw(request.form['password'].encode('utf-8'), login_user['password']) != login_user['password']:
@@ -33,7 +30,7 @@ def login():
             # return redirect(url_for('dashboard'))
         else:
             session['active_user'] = request.form['email']
-            flash('You were successfully logged in')
+            # flash('You were successfully logged in')
             return redirect(url_for('dashboard'))
             # error = 'Invalid credentials'
             # flash('You test d in')
@@ -84,7 +81,7 @@ def dashboard():
     if "active_user" in session:  # checking if active user exist in the session (cookies)
         active_user = session["active_user"]
         print(active_user)  # use this variable to check the email who is loged in during a session (remove the comment)
-        projects = mongo.db.project_table.find({}, {"title": 1, "description": 1, "date": 1})
+        projects = mongo.db.project_table.find({}, {"title": 1, "description": 1, "date": 1, "status": 1})
         return render_template('dashboard/home.html', projects=projects)  # https://startbootstrap.com/template/sb-admin
     else:
         error = 'Invalid credentials'
@@ -105,15 +102,17 @@ def create_new_project():
         project_id = ObjectId()  # setup the project's id
 
         project_collection = mongo.db.project_table  # project collection
-        existing_project = project_collection.find_one({'title': request.form['project_title']})
+        existing_project = project_collection.find_one({'title': request.form['project_title']})  # check if the project already exists based on the title
 
         if existing_project is None:
             project_collection.insert_one({"_id": project_id,
                                            'title': request.form['project_title'],
                                            'description': request.form['project_description'],
-                                           'date': request.form['project_date']})
+                                           'date': request.form['project_date'],
+                                           'status': "Not started",
+                                           })
             # As soon as the project is created, the next step will be to add a new empty task to avoid the 404 issue
-            # this will be deleted as soon as the user will add a new task
+            # this will be deleted when the user adds the first task
             insert_new_empty_task(project_id)
 
             return redirect(url_for('view_project', project_id=project_id))
@@ -130,7 +129,9 @@ def view_project(project_id):
     project = mongo.db.project_table.find_one_or_404({'_id': project_id})
     task = mongo.db.task_table.find_one_or_404({'project_id': project_id})
 
-    tasks = mongo.db.task_table.find({}, {"title": 1, "description": 1, "date": 1, "assign_to": 1, "project_id": 1})
+    # Collect all the variables which we want to display in the project page
+    tasks = mongo.db.task_table.find({}, {"title": 1, "description": 1, "date": 1, "assign_to": 1, "project_id": 1,
+                                          "status": 1})
     users = mongo.db.users.find({}, {"fullname": 1})
 
     return render_template('dashboard/projects/view.html', project=project, task=task, tasks=tasks, users=users)
@@ -144,7 +145,8 @@ def update_project(project_id):
                                            {"$set": {
                                                "title": request.form.get('title'),
                                                "description": request.form.get('description'),
-                                               "date": request.form.get('date')
+                                               "date": request.form.get('date'),
+                                               'status': request.form.get('status')
                                            }
                                            })
 
@@ -170,7 +172,8 @@ def insert_new_empty_task(project_id):
             "description": "",
             "date": "",
             "project_id": project_id,
-            "assign_to": ""
+            "assign_to": "",
+            "status": ""
         }
     )
 
@@ -195,9 +198,11 @@ def create_new_task(project_id):
                 'date': request.form['task_date'],
                 "assign_to": request.form['task_assign_to'],
                 "project_id": project_id,
+                "status": "Not started"
             }
         )
-        task_collection.remove({'project_id': project_id, 'title': ""})  # delete now the auto-created empty task of this project
+        task_collection.remove(
+            {'project_id': project_id, 'title': ""})  # delete now the auto-created empty task of this project
 
         return redirect(url_for('view_project', project_id=project_id, task_id=task_id))
 
@@ -211,7 +216,7 @@ def view_task(project_id, task_id):
     project = mongo.db.project_table.find_one_or_404({'_id': project_id})
     task = mongo.db.task_table.find_one_or_404({'_id': task_id})
 
-    tasks = mongo.db.task_table.find({}, {"title": 1, "description": 1, "date": 1, "assign_to": 1})
+    tasks = mongo.db.task_table.find({}, {"title": 1, "description": 1, "date": 1, "assign_to": 1, "status": 1})
     users = mongo.db.users.find({}, {"fullname": 1})
 
     return render_template('dashboard/tasks/view.html', project=project, task=task, tasks=tasks, users=users)
@@ -232,7 +237,8 @@ def update_task(project_id, task_id):
                                             "title": request.form.get('title'),
                                             "description": request.form.get('description'),
                                             "date": request.form.get('date'),
-                                            "assign_to": request.form.get('assign_to')
+                                            "assign_to": request.form.get('assign_to'),
+                                            'status': request.form.get('status')
                                         }
                                         })
 
@@ -255,7 +261,8 @@ def delete_task(project_id, task_id):
                                                 "title": "",
                                                 "description": "",
                                                 "date": "",
-                                                "assign_to": ""
+                                                "assign_to": "",
+                                                "status": ""
                                             }
                                             })
     else:
@@ -272,11 +279,36 @@ def delete_task(project_id, task_id):
 # https://stackoverflow.com/questions/53425222/python-flask-i-want-to-display-the-data-that-present-in-mongodb-on-a-html-page
 @app.route('/dashboard/table')
 def table():
-    projects = mongo.db.project_table.find({}, {"title": 1, "description": 1, "date": 1})
+    projects = mongo.db.project_table.find({}, {"title": 1, "description": 1, "date": 1, "status": 1})
     return render_template('dashboard/table.html', projects=projects)
 
 
-# -----> END OF TABLE TAP PAGES FUNCTIONS <-----
+# Start project table categories
+@app.route('/dashboard/table/not-started')
+def table_not_started():
+    projects = mongo.db.project_table.find({}, {"title": 1, "description": 1, "date": 1, "status": 1})
+    return render_template('dashboard/categories/notstarted.html', projects=projects)
+
+
+@app.route('/dashboard/table/in-progress')
+def table_in_progress():
+    projects = mongo.db.project_table.find({}, {"title": 1, "description": 1, "date": 1, "status": 1})
+    return render_template('dashboard/categories/inprogress.html', projects=projects)
+
+
+@app.route('/dashboard/table/completed')
+def table_completed():
+    projects = mongo.db.project_table.find({}, {"title": 1, "description": 1, "date": 1, "status": 1})
+    return render_template('dashboard/categories/completed.html', projects=projects)
+
+
+@app.route('/dashboard/table/emergency')
+def table_emergency():
+    projects = mongo.db.project_table.find({}, {"title": 1, "description": 1, "date": 1, "status": 1})
+    return render_template('dashboard/categories/emergency.html', projects=projects)
+
+
+# -----> END OF TABLE TAB PAGES FUNCTIONS <-----
 
 
 # https://stackoverflow.com/a/63216793
