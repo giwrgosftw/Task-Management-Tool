@@ -287,7 +287,7 @@ def main():
 
     # Otherwise, continue as normal
     app.secret_key = os.urandom(24)  # Keeps the client-side sessions secure by generating random key (output 24 bytes)
-    app.run(host="127.0.0.1", port=5000)
+    app.run(host="0.0.0.0", port=5000)
 
 
 if __name__ == "__main__":
