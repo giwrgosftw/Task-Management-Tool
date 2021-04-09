@@ -155,10 +155,17 @@
     var myChart = new Chart(ctx, {
         type: 'bar',
         data: {
-            labels: ['April', 'May', 'June', 'July', 'August', 'September'],
+            labels: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
             datasets: [{
-                data: [{{dataMonth[3]}}, {{dataMonth[4]}}, {{dataMonth[5]}}, {{dataMonth[6]}}, {{dataMonth[7]}}, {{dataMonth[8]}}],
+                data: [{{dataMonth[0]}}, {{dataMonth[1]}}, {{dataMonth[2]}}, {{dataMonth[3]}}, {{dataMonth[4]}}, {{dataMonth[5]}}, {{dataMonth[6]}}, {{dataMonth[7]}}, {{dataMonth[8]}}, {{dataMonth[9]}}, {{dataMonth[10]}}, {{dataMonth[11]}}, {{dataMonth[12]}}],
                 backgroundColor: [
+                    'rgba(255, 99, 132, 0.2)',
+                    'rgba(54, 162, 235, 0.2)',
+                    'rgba(255, 206, 86, 0.2)',
+                    'rgba(75, 192, 192, 0.2)',
+                    'rgba(153, 102, 255, 0.2)',
+                    'rgba(255, 159, 64, 0.2)',
+
                     'rgba(255, 99, 132, 0.2)',
                     'rgba(54, 162, 235, 0.2)',
                     'rgba(255, 206, 86, 0.2)',
@@ -167,6 +174,13 @@
                     'rgba(255, 159, 64, 0.2)'
                 ],
                 borderColor: [
+                    'rgba(255, 99, 132, 1)',
+                    'rgba(54, 162, 235, 1)',
+                    'rgba(255, 206, 86, 1)',
+                    'rgba(75, 192, 192, 1)',
+                    'rgba(153, 102, 255, 1)',
+                    'rgba(255, 159, 64, 1)',
+
                     'rgba(255, 99, 132, 1)',
                     'rgba(54, 162, 235, 1)',
                     'rgba(255, 206, 86, 1)',
@@ -201,11 +215,11 @@
     // Pie Chart
     var ctx = document.getElementById("PieChart");
     var myPieChart = new Chart(ctx, {
-        type: 'pie',
+        type: 'doughnut',
         data: {
             labels: ["% Not Started", "% In-progress", "% Completed", "% Emergency"],
             datasets: [{
-                data: [{{(dataStatus[0]/project_sum)*100}}, {{(dataStatus[1]/project_sum)*100}}, {{(dataStatus[2]/project_sum)*100}}, {{(dataStatus[3]/project_sum)*100}}],
+                data: [{{dataStatus[0]}}, {{dataStatus[1]}}, {{dataStatus[2]}}, {{dataStatus[3]}}],
                 backgroundColor: ['#007bff', '#ffc107', '#28a745', '#dc3545'],
             }],
         },

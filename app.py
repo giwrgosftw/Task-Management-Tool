@@ -95,12 +95,13 @@ def dashboard():
             months.append(
                 [mongo.db.project_table.find({'date': {'$regex': "2021-0" + str(x), '$options': 'i'}}).count()])
 
-        status = [mongo.db.project_table.find({'status': 'Not started'}).count(),
-                  mongo.db.project_table.find({'status': 'In-progress'}).count(),
-                  mongo.db.project_table.find({'status': 'Completed'}).count(),
-                  mongo.db.project_table.find({'status': 'Emergency'}).count()]  # create an empty list
+        project_sum = mongo.db.project_table.find().count()  # calculate the sum of all the projects SHOULD CONSIDER USERID
 
-        project_sum = mongo.db.project_table.find().count()  # calculate the sum of all the projects SHOULD BE WITH USERID
+        # https://stackoverflow.com/questions/41271299/how-can-i-get-the-first-two-digits-of-a-number
+        status = [float(str((mongo.db.project_table.find({'status': 'Not started'}).count())/project_sum*100)[:2]),
+                  float(str((mongo.db.project_table.find({'status': 'In-progress'}).count())/project_sum*100)[:2]),
+                  float(str((mongo.db.project_table.find({'status': 'Completed'}).count())/project_sum*100)[:2]),
+                  float(str((mongo.db.project_table.find({'status': 'Emergency'}).count())/project_sum*100)[:2])]
 
         # render these data to the home.html which sending the charts data to base.html
         return render_template('dashboard/home.html', projects=projects, project_sum=project_sum, dataMonth=months,
@@ -412,10 +413,11 @@ def charts():
 
     project_sum = mongo.db.project_table.find().count()  # calculate the sum of all the projects SHOULD CONSIDER USERID
 
-    status = [mongo.db.project_table.find({'status': 'Not started'}).count(),
-              mongo.db.project_table.find({'status': 'In-progress'}).count(),
-              mongo.db.project_table.find({'status': 'Completed'}).count(),
-              mongo.db.project_table.find({'status': 'Emergency'}).count()]
+    # https://stackoverflow.com/questions/41271299/how-can-i-get-the-first-two-digits-of-a-number
+    status = [float(str((mongo.db.project_table.find({'status': 'Not started'}).count())/project_sum*100)[:2]),
+              float(str((mongo.db.project_table.find({'status': 'In-progress'}).count())/project_sum*100)[:2]),
+              float(str((mongo.db.project_table.find({'status': 'Completed'}).count())/project_sum*100)[:2]),
+              float(str((mongo.db.project_table.find({'status': 'Emergency'}).count())/project_sum*100)[:2])]
 
     # render these data to the charts.html which sending the charts data to base.html
     return render_template('dashboard/charts.html', dataMonth=months, dataStatus=status, project_sum=project_sum)
