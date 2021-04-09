@@ -5,6 +5,8 @@ import gridfs
 from flask import Flask, render_template, request, url_for, session, redirect, flash
 from mongodb_models import settings_mongo
 from bson import ObjectId
+import warnings
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 app = Flask(__name__)
 mongo = settings_mongo.config_mongo_db_with_app(app)
