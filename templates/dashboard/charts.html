@@ -1,4 +1,3 @@
-<!--https://flask.palletsprojects.com/en/1.1.x/patterns/templateinheritance/-->
 <!DOCTYPE html>
 <html lang="en">
 
@@ -94,10 +93,32 @@
     </div>
 </div>
 
-<div id="content">
-    {% block content %}
-    {% endblock %}
-</div>
+<div id="layoutSidenav">
+    <div id="layoutSidenav_content">
+            <div class="container-fluid" style="margin-bottom: 20px">
+                <h1 class="mt-4">Charts</h1>
+                <ol class="breadcrumb mb-4">
+                    <li class="breadcrumb-item"><a href="/dashboard">Dashboard</a></li>
+                    <li class="breadcrumb-item active">Charts</li>
+                </ol>
+                <div class="card mb-4" style="width: 70%; margin-left: 170px;">
+                    <div class="card-header">
+                        <i class="fas fa-chart-pie mr-1"></i>
+                        Pie Chart - Click on the colored boxes and watch the magic
+                    </div>
+                    <div class="card-body"><canvas id="PieChart" width="100%" height="50"></canvas></div>
+                </div>
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <i class="fas fa-chart-area mr-1"></i>
+                        Bar Chart - Number of projects per month
+                    </div>
+                    <div class="card-body"><canvas id="BarChart" width="100%" height="30"></canvas></div>
+                </div>
+
+                </div>
+            </div>
+    </div>
 
 <!-- Footer -->
 <footer class="py-4 bg-white mt-auto">
@@ -125,6 +146,82 @@
 <script src="https://cdn.datatables.net/1.10.20/js/jquery.dataTables.min.js" crossorigin="anonymous"></script>
 <script src="https://cdn.datatables.net/1.10.20/js/dataTables.bootstrap4.min.js" crossorigin="anonymous"></script>
 <script src="{{ url_for('static', filename='dist/assets/demo/datatables-demo.js') }}"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@0.7.0"></script>
+
+<!-- BarChart - https://www.chartjs.org/docs/latest/ -->
+<script>
+    var ctx = document.getElementById('BarChart').getContext('2d');
+    var myChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['April', 'May', 'June', 'July', 'August', 'September'],
+            datasets: [{
+                data: [{{dataMonth[3]}}, {{dataMonth[4]}}, {{dataMonth[5]}}, {{dataMonth[6]}}, {{dataMonth[7]}}, {{dataMonth[8]}}],
+                backgroundColor: [
+                    'rgba(255, 99, 132, 0.2)',
+                    'rgba(54, 162, 235, 0.2)',
+                    'rgba(255, 206, 86, 0.2)',
+                    'rgba(75, 192, 192, 0.2)',
+                    'rgba(153, 102, 255, 0.2)',
+                    'rgba(255, 159, 64, 0.2)'
+                ],
+                borderColor: [
+                    'rgba(255, 99, 132, 1)',
+                    'rgba(54, 162, 235, 1)',
+                    'rgba(255, 206, 86, 1)',
+                    'rgba(75, 192, 192, 1)',
+                    'rgba(153, 102, 255, 1)',
+                    'rgba(255, 159, 64, 1)'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            legend: {
+                display: false
+            },
+            scales: {
+                yAxes: [{
+                    ticks: {
+                        min: 0,
+                        max: 20,
+                        maxTicksLimit: 5
+                    },
+                    gridLines: {
+                        display: true
+                    }
+                }],
+            }
+        }
+    });
+</script>
+
+<script>
+    // Pie Chart
+    var ctx = document.getElementById("PieChart");
+    var myPieChart = new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: ["Not Started", "In-progress", "Completed", "Emergency"],
+            datasets: [{
+                data: [{{dataStatus[0]}}, {{dataStatus[1]}}, {{dataStatus[2]}}, {{dataStatus[3]}}],
+                backgroundColor: ['#007bff', '#ffc107', '#28a745', '#dc3545'],
+            }],
+        },
+        options: {
+            plugins: {
+                labels: {
+                    formatter: function (value, context) {
+                        return context.chart.data.labels[
+                            context.dataIndex
+                            ];
+                    },
+                },
+            },
+        },
+    });
+</script>
 
 </body>
 </html>
