@@ -84,7 +84,25 @@ def dashboard():
         active_user = session["active_user"]
         print(active_user)  # use this variable to check the email who is loged in during a session (remove the comment)
         projects = mongo.db.project_table.find({}, {"title": 1, "description": 1, "date": 1, "status": 1})
-        return render_template('dashboard/home.html', projects=projects)  # https://startbootstrap.com/template/sb-admin
+
+        # CHARTS
+        months = []  # create an empty list
+        # Refresh the list by adding the number of project of each month
+        for x in range(1, 13):  # 12 months counting from 1
+            # Source: https://stackoverflow.com/a/41157529
+            # Source: https://docs.mongodb.com/manual/reference/method/db.collection.count/
+            # Create a list of data, find and count the projects which belong to a specific month
+            months.append(
+                [mongo.db.project_table.find({'date': {'$regex': "2021-0" + str(x), '$options': 'i'}}).count()])
+
+        status = [mongo.db.project_table.find({'status': 'Not started'}).count(),
+                  mongo.db.project_table.find({'status': 'In-progress'}).count(),
+                  mongo.db.project_table.find({'status': 'Completed'}).count(),
+                  mongo.db.project_table.find({'status': 'Emergency'}).count()]  # create an empty list
+
+        # render these data to the home.html which sending the charts data to base.html
+        return render_template('dashboard/home.html', projects=projects, dataMonth=months,
+                               dataStatus=status)  # https://startbootstrap.com/template/sb-admin
     else:
         error = 'Invalid credentials'
         print(error)
@@ -159,7 +177,6 @@ def update_project(project_id):
 # Delete a project
 @app.route('/dashboard/projects/delete/<ObjectId:project_id>', methods=['POST'])
 def delete_project(project_id):
-
     # 1. Delete the uploaded files of the project
     upload_results = mongo.db.upload_table.find(
         {"project_id": project_id})  # find the collection of the files which we want to delete based on the project_id
@@ -180,7 +197,7 @@ def delete_project(project_id):
     mongo.db.project_table.remove({'_id': project_id})  # Delete the project from the database
 
     # 3. Finally delete the project
-    mongo.db.task_table.remove({'project_id': project_id}) # Delete the project's tasks from the database
+    mongo.db.task_table.remove({'project_id': project_id})  # Delete the project's tasks from the database
 
     return redirect(url_for('table'))
 
@@ -378,6 +395,29 @@ def delete_file(project_id, upload_id):
 
 
 # -----> END OF FILES LIST PAGES AND FUNCTIONS <-----
+
+# -----> CHARTS TAB PAGES AND FUNCTIONS <-----
+
+@app.route('/dashboard/charts')
+def charts():
+    months = []  # create an empty list
+    # Refresh the list by adding the number of project of each month
+    for x in range(1, 13):  # 12 months counting from 1
+        # Source: https://stackoverflow.com/a/41157529
+        # Source: https://docs.mongodb.com/manual/reference/method/db.collection.count/
+        # Create a list of data, find and count the projects which belong to a specific month
+        months.append([mongo.db.project_table.find({'date': {'$regex': "2021-0" + str(x), '$options': 'i'}}).count()])
+
+    status = [mongo.db.project_table.find({'status': 'Not started'}).count(),
+              mongo.db.project_table.find({'status': 'In-progress'}).count(),
+              mongo.db.project_table.find({'status': 'Completed'}).count(),
+              mongo.db.project_table.find({'status': 'Emergency'}).count()]
+
+    # render these data to the charts.html which sending the charts data to base.html
+    return render_template('dashboard/charts.html', dataMonth=months, dataStatus=status)
+
+
+# -----> END OF CHART TAB PAGES AND FUNCTIONS <-----
 
 
 # -----> TABLE TAB PAGES AND FUNCTIONS <-----
