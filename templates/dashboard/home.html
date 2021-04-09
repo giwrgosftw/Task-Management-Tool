@@ -141,7 +141,7 @@
                 </div>
                 <div class="row">
                     <div class="col-xl-6">
-                        <div class="card mb-4">
+                        <div class="card mb-4" style="width: 103.5%; height: 93%">
                             <div class="card-header">
                                 <i class="fas fa-chart-area mr-1"></i>
                                 Pie Chart - Click on the colored boxes and watch the magic
@@ -155,7 +155,7 @@
                                 <i class="fas fa-chart-bar mr-1"></i>
                                 Bar Chart - Number of projects per month
                             </div>
-                            <div class="card-body"><canvas id="BarChart" width="100%" height="40"></canvas></div>
+                            <div class="card-body"><canvas id="BarChart" width="100%" height="42"></canvas></div>
                         </div>
                     </div>
                 </div>
@@ -283,11 +283,11 @@
     // Pie Chart
     var ctx = document.getElementById("PieChart");
     var myPieChart = new Chart(ctx, {
-        type: 'pie',
+        type: 'doughnut',
         data: {
-            labels: ["Not Started", "In-progress", "Completed", "Emergency"],
+            labels: ["% Not Started", "% In-progress", "% Completed", "% Emergency"],
             datasets: [{
-                data: [{{dataStatus[0]}}, {{dataStatus[1]}}, {{dataStatus[2]}}, {{dataStatus[3]}}],
+                data: [{{(dataStatus[0]/project_sum)*100}}, {{(dataStatus[1]/project_sum)*100}}, {{(dataStatus[2]/project_sum)*100}}, {{(dataStatus[3]/project_sum)*100}}],
                 backgroundColor: ['#007bff', '#ffc107', '#28a745', '#dc3545'],
             }],
         },

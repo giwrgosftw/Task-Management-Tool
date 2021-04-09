@@ -203,9 +203,9 @@
     var myPieChart = new Chart(ctx, {
         type: 'pie',
         data: {
-            labels: ["Not Started", "In-progress", "Completed", "Emergency"],
+            labels: ["% Not Started", "% In-progress", "% Completed", "% Emergency"],
             datasets: [{
-                data: [{{dataStatus[0]}}, {{dataStatus[1]}}, {{dataStatus[2]}}, {{dataStatus[3]}}],
+                data: [{{(dataStatus[0]/project_sum)*100}}, {{(dataStatus[1]/project_sum)*100}}, {{(dataStatus[2]/project_sum)*100}}, {{(dataStatus[3]/project_sum)*100}}],
                 backgroundColor: ['#007bff', '#ffc107', '#28a745', '#dc3545'],
             }],
         },
