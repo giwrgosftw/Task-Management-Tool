@@ -100,8 +100,10 @@ def dashboard():
                   mongo.db.project_table.find({'status': 'Completed'}).count(),
                   mongo.db.project_table.find({'status': 'Emergency'}).count()]  # create an empty list
 
+        project_sum = mongo.db.project_table.find().count()  # calculate the sum of all the projects SHOULD BE WITH USERID
+
         # render these data to the home.html which sending the charts data to base.html
-        return render_template('dashboard/home.html', projects=projects, dataMonth=months,
+        return render_template('dashboard/home.html', projects=projects, project_sum=project_sum, dataMonth=months,
                                dataStatus=status)  # https://startbootstrap.com/template/sb-admin
     else:
         error = 'Invalid credentials'
@@ -408,13 +410,15 @@ def charts():
         # Create a list of data, find and count the projects which belong to a specific month
         months.append([mongo.db.project_table.find({'date': {'$regex': "2021-0" + str(x), '$options': 'i'}}).count()])
 
+    project_sum = mongo.db.project_table.find().count()  # calculate the sum of all the projects SHOULD CONSIDER USERID
+
     status = [mongo.db.project_table.find({'status': 'Not started'}).count(),
               mongo.db.project_table.find({'status': 'In-progress'}).count(),
               mongo.db.project_table.find({'status': 'Completed'}).count(),
               mongo.db.project_table.find({'status': 'Emergency'}).count()]
 
     # render these data to the charts.html which sending the charts data to base.html
-    return render_template('dashboard/charts.html', dataMonth=months, dataStatus=status)
+    return render_template('dashboard/charts.html', dataMonth=months, dataStatus=status, project_sum=project_sum)
 
 
 # -----> END OF CHART TAB PAGES AND FUNCTIONS <-----
