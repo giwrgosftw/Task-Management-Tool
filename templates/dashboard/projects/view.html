@@ -46,7 +46,7 @@
 
                     <button style=margin-top:12px; type="submit" class="btn btn-primary" formaction="{{ url_for('update_project', project_id=project._id) }}" >Update </button>
                     <button style=margin-top:12px; type="submit" class="btn btn-danger" formaction="{{ url_for('delete_project', project_id=project._id) }}"> Delete </button>
-                    <a style=margin-top:12px; href="{{ '/dashboard/projects/%s'%project["_id"] + '/uploads' }}" class="btn btn-secondary">Upload/View file</a>
+                    <a style=margin-top:12px; href="{{ '/dashboard/projects/%s'%project["_id"] + '/uploads' }}" class="btn btn-secondary">Upload / View file(s)</a>
                 </div>
             </form>
 

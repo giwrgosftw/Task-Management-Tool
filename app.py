@@ -159,9 +159,29 @@ def update_project(project_id):
 # Delete a project
 @app.route('/dashboard/projects/delete/<ObjectId:project_id>', methods=['POST'])
 def delete_project(project_id):
-    # Delete the project and the tasks from the database
-    mongo.db.project_table.remove({'_id': project_id})
-    mongo.db.task_table.remove({'project_id': project_id})
+
+    # 1. Delete the uploaded files of the project
+    upload_results = mongo.db.upload_table.find(
+        {"project_id": project_id})  # find the collection of the files which we want to delete based on the project_id
+
+    for file_document in upload_results:  # iterate all the files which are included in the project that we want to delete
+
+        file_name = file_document[
+            'filename']  # keep the name of the file that we want to delete which exist in the upload_table
+        fs_result = mongo.db.fs.files.find_one({
+            "filename": file_name})  # use the above filename in order to collect the data of the file which we want to delete and also exist in the fs.file table
+        fs_id = fs_result[
+            '_id']  # keep the id of the file that we want to delete which it is also exist in the fs.file table
+
+        fs.delete(fs_id)  # delete the file from the fs.files and fs.chunks table
+        mongo.db.upload_table.remove({'project_id': project_id})  # delete the file from the upload_table
+
+    # 2. Delete the tasks of the project
+    mongo.db.project_table.remove({'_id': project_id})  # Delete the project from the database
+
+    # 3. Finally delete the project
+    mongo.db.task_table.remove({'project_id': project_id}) # Delete the project's tasks from the database
+
     return redirect(url_for('table'))
 
 
@@ -304,15 +324,14 @@ def upload_new_file(project_id):
     return redirect(url_for('upload_table', project_id=project_id))
 
 
-# Get the file from the upload list
+# Download the file from the upload list
 @app.route('/dashboard/projects/<ObjectId:project_id>/uploads/file/<filename>', methods=['GET'])
 def download_file(project_id, filename):
     # https://stackoverflow.com/questions/12645505/python-check-if-any-items-of-a-tuple-are-in-a-string
     valid_file_extensions = ".txt", ".pdf", ".zip", ".rar", ".bmp", ".gif", ".jpg", ".jpeg", ".png"
-    if not any(s in str(filename) for s in valid_file_extensions):
+    if not any(str(filename).endswith(s) for s in valid_file_extensions):
 
-        dest_dir = os.path.expandvars('%userprofile%/Downloads/task-management-tool/')  # where to put it
-
+        dest_dir = os.path.expandvars('%userprofile%/Downloads/task-management-tool/')  # where to place it
         # make the directories (recursively)
         try:
             os.makedirs(dest_dir)
