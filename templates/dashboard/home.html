@@ -88,7 +88,7 @@
             </div>
             <div class="sb-sidenav-footer">
                 <div class="small">Logged in as:</div>
-                Manager
+                {{ user_email }}
             </div>
         </nav>
     </div>
@@ -144,8 +144,8 @@
                     <div class="col-xl-6">
                         <div class="card mb-4" style="width: 103.5%; height: 93%">
                             <div class="card-header">
-                                <i class="fas fa-chart-area mr-1"></i>
-                                Pie Chart - Click on the colored boxes and watch the magic
+                                <i class="fas fa-chart-pie mr-1"></i>
+                                Personal Pie Chart - Click on the colored boxes and watch the magic
                             </div>
                             <div class="card-body"><canvas id="PieChart" width="100%" height="40"></canvas></div>
                         </div>
@@ -154,7 +154,7 @@
                         <div class="card mb-4">
                             <div class="card-header">
                                 <i class="fas fa-chart-bar mr-1"></i>
-                                Bar Chart - Number of projects per month
+                                Personal Bar Chart - Number of your personal projects per month
                             </div>
                             <div class="card-body"><canvas id="BarChart" width="100%" height="42"></canvas></div>
                         </div>
