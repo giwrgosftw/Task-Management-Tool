@@ -28,13 +28,15 @@
                             </tfoot>
                             <tbody>
                             {% for project in projects %}
-                                {% if project["status"]=="Completed"%}
-                                    <tr>
-                                        <td> <a href="{{ '/dashboard/projects/%s'%project["_id"] }}"> {{project["title"]}} </a> </td>
-                                        <td>{{project["description"]}}</td>
-                                        <td>{{project["date"]}}</td>
-                                        <td>{{project["status"]}}</td>
-                                    </tr>
+                                {% if project['project_creator_email']==user_email %} <!-- show only the projects of the current logged-in user -->
+                                    {% if project["status"]=="Completed"%}
+                                        <tr>
+                                            <td> <a href="{{ '/dashboard/%s'%user_email + '/projects/%s'%project["_id"] }}"> {{project["title"]}} </a> </td>
+                                            <td>{{project["description"]}}</td>
+                                            <td>{{project["date"]}}</td>
+                                            <td>{{project["status"]}}</td>
+                                        </tr>
+                                    {% endif %}
                                 {% endif %}
                             {% endfor %}
                             </tbody>

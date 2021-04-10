@@ -6,6 +6,7 @@ from flask import Flask, render_template, request, url_for, session, redirect, f
 from mongodb_models import settings_mongo
 from bson import ObjectId
 import warnings
+
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 app = Flask(__name__)
@@ -34,8 +35,9 @@ def login():
             # return redirect(url_for('dashboard'))
         else:
             session['active_user'] = request.form['email']
+            print("You logged in as: " + session['active_user'])
             # flash('You were successfully logged in')
-            return redirect(url_for('dashboard'))
+            return redirect(url_for('dashboard', user_email=session['active_user']))
             # error = 'Invalid credentials'
             # flash('You test d in')
     else:
@@ -80,12 +82,13 @@ def logout():
 
 # -----> DASHBOARD PAGES <-----
 
-@app.route('/dashboard')
-def dashboard():
+@app.route('/dashboard/<user_email>')
+def dashboard(user_email):
     if "active_user" in session:  # checking if active user exist in the session (cookies)
-        active_user = session["active_user"]
-        print(active_user)  # use this variable to check the email who is loged in during a session (remove the comment)
-        projects = mongo.db.project_table.find({}, {"title": 1, "description": 1, "date": 1, "status": 1})
+
+        # use this variable to check the email who is logged in during a session (remove the comment)
+        users = mongo.db.user_table.find({}, {"email": 1})
+        projects = mongo.db.project_table.find({}, {"title": 1, "description": 1, "date": 1, "status": 1, "project_creator_email": 1})
 
         # CHARTS
         months = []  # create an empty list
@@ -94,19 +97,23 @@ def dashboard():
             # Source: https://stackoverflow.com/a/41157529
             # Source: https://docs.mongodb.com/manual/reference/method/db.collection.count/
             # Create a list of data, find and count the projects which belong to a specific month
-            months.append(
-                [mongo.db.project_table.find({'date': {'$regex': "2021-0" + str(x), '$options': 'i'}}).count()])
+            # find({..},{..}) --> one condition, find({... , ...}, {..}) --> two conditions
+            months.append([mongo.db.project_table.find({'project_creator_email': user_email, 'date': {'$regex': "2021-0" + str(x), '$options': 'i'}}).count()])
 
-        project_sum = mongo.db.project_table.find().count()  # calculate the sum of all the projects SHOULD CONSIDER USERID
+        project_sum = mongo.db.project_table.find({'project_creator_email': user_email}).count()  # calculate the sum of all project of the current user
 
         # https://stackoverflow.com/questions/41271299/how-can-i-get-the-first-two-digits-of-a-number
-        status = [float(str((mongo.db.project_table.find({'status': 'Not started'}).count())/project_sum*100)[:3]),
-                  float(str((mongo.db.project_table.find({'status': 'In-progress'}).count())/project_sum*100)[:3]),
-                  float(str((mongo.db.project_table.find({'status': 'Completed'}).count())/project_sum*100)[:3]),
-                  float(str((mongo.db.project_table.find({'status': 'Emergency'}).count())/project_sum*100)[:3])]
+        try:
+            status = [float(str((mongo.db.project_table.find({'project_creator_email': user_email, 'status': 'Not started'}).count()) / project_sum * 100)[:3]),
+                      float(str((mongo.db.project_table.find({'project_creator_email': user_email, 'status': 'In-progress'}).count()) / project_sum * 100)[:3]),
+                      float(str((mongo.db.project_table.find({'project_creator_email': user_email, 'status': 'Completed'}).count()) / project_sum * 100)[:3]),
+                      float(str((mongo.db.project_table.find({'project_creator_email': user_email, 'status': 'Emergency'}).count()) / project_sum * 100)[:3])]
+        except ZeroDivisionError:
+            status = [0, 0, 0, 0]
 
         # render these data to the home.html which sending the charts data to base.html
-        return render_template('dashboard/home.html', projects=projects, project_sum=project_sum, dataMonth=months,
+        return render_template('dashboard/home.html', users=users, user_email=user_email, projects=projects,
+                               project_sum=project_sum, dataMonth=months,
                                dataStatus=status)  # https://startbootstrap.com/template/sb-admin
     else:
         error = 'Invalid credentials'
@@ -119,8 +126,8 @@ def dashboard():
 # -----> END DASHBOARD PAGES <-----
 
 # -----> PROJECTS PAGES AND FUNCTIONS <-----
-@app.route('/dashboard/projects/new_project', methods=['POST', 'GET'])
-def create_new_project():
+@app.route('/dashboard/<user_email>/projects/new_project', methods=['POST', 'GET'])
+def create_new_project(user_email):
     if request.method == 'POST':
 
         # https://docs.mongodb.com/manual/reference/database-references/
@@ -136,21 +143,22 @@ def create_new_project():
                                            'description': request.form['project_description'],
                                            'date': request.form['project_date'],
                                            'status': "Not started",
+                                           'project_creator_email': user_email,
                                            })
             # As soon as the project is created, the next step will be to add a new empty task to avoid the 404 issue
             # this will be deleted when the user adds the first task
-            insert_new_empty_task(project_id)
+            insert_new_empty_task(user_email, project_id)
 
-            return redirect(url_for('view_project', project_id=project_id))
+            return redirect(url_for('view_project', user_email=user_email, project_id=project_id))
 
         return 'That project already exists!'
 
-    return render_template('dashboard/projects/new.html')
+    return render_template('dashboard/projects/new.html', user_email=user_email)
 
 
 # View a Project
-@app.route('/dashboard/projects/<ObjectId:project_id>', methods=['GET'])
-def view_project(project_id):
+@app.route('/dashboard/<user_email>/projects/<ObjectId:project_id>', methods=['GET'])
+def view_project(user_email, project_id):
     # Check if the project exists in the db table based on the id
     project = mongo.db.project_table.find_one_or_404({'_id': project_id})
     task = mongo.db.task_table.find_one_or_404({'project_id': project_id})
@@ -160,12 +168,13 @@ def view_project(project_id):
                                           "status": 1})
     users = mongo.db.user_table.find({}, {"fullname": 1})
 
-    return render_template('dashboard/projects/view.html', project=project, task=task, tasks=tasks, users=users)
+    return render_template('dashboard/projects/view.html', user_email=user_email, project=project, task=task,
+                           tasks=tasks, users=users)
 
 
 # Update Project details
-@app.route('/dashboard/projects/update/<ObjectId:project_id>', methods=['POST'])
-def update_project(project_id):
+@app.route('/dashboard/<user_email>/projects/update/<ObjectId:project_id>', methods=['POST'])
+def update_project(user_email, project_id):
     project_collection = mongo.db.project_table
     project_collection.find_one_and_update({"_id": project_id},
                                            {"$set": {
@@ -176,12 +185,12 @@ def update_project(project_id):
                                            }
                                            })
 
-    return redirect(url_for('table'))
+    return redirect(url_for('table', user_email=user_email))
 
 
 # Delete a project
-@app.route('/dashboard/projects/delete/<ObjectId:project_id>', methods=['POST'])
-def delete_project(project_id):
+@app.route('/dashboard/<user_email>/projects/delete/<ObjectId:project_id>', methods=['POST'])
+def delete_project(user_email, project_id):
     # 1. Delete the uploaded files of the project
     upload_results = mongo.db.upload_table.find(
         {"project_id": project_id})  # find the collection of the files which we want to delete based on the project_id
@@ -204,17 +213,17 @@ def delete_project(project_id):
     # 3. Finally delete the project
     mongo.db.task_table.remove({'project_id': project_id})  # Delete the project's tasks from the database
 
-    return redirect(url_for('table'))
+    return redirect(url_for('table', user_email=user_email))
 
 
 # Add an empty task in the project's table
-@app.route('/dashboard/projects/<ObjectId:project_id>/new_empty_task', methods=['POST'])
-def insert_new_empty_task(project_id):
+@app.route('/dashboard/<user_email>/projects/<ObjectId:project_id>/new_empty_task', methods=['POST'])
+def insert_new_empty_task(user_email, project_id):
     task_collection = mongo.db.task_table
     task_collection.insert_one(
         {
             "title": "",
-            "description": "",
+            "description": "First always empty, it will be removed automatically",
             "date": "",
             "project_id": project_id,
             "assign_to": "",
@@ -222,14 +231,14 @@ def insert_new_empty_task(project_id):
         }
     )
 
-    return redirect(url_for('view_project', project_id=project_id))
+    return redirect(url_for('view_project', user_email=user_email, project_id=project_id))
 
 
 # -----> END OF PROJECTS PAGES AND FUNCTIONS<-----
 
 # Add new task in the project's table
-@app.route('/dashboard/projects/<ObjectId:project_id>/new_task', methods=['POST', 'GET'])
-def create_new_task(project_id):
+@app.route('/dashboard/<user_email>/projects/<ObjectId:project_id>/new_task', methods=['POST', 'GET'])
+def create_new_task(user_email, project_id):
     project = mongo.db.project_table.find_one_or_404({'_id': project_id})
     users = mongo.db.user_table.find({}, {"fullname": 1})
     if request.method == 'POST':
@@ -246,17 +255,21 @@ def create_new_task(project_id):
                 "status": "Not started"
             }
         )
-        task_collection.remove(
-            {'project_id': project_id, 'title': ""})  # delete now the auto-created empty task of this project
+        # delete now the auto-created empty task of this project
+        task_collection.remove({'project_id': project_id, 'title': ""})
 
-        return redirect(url_for('view_project', project_id=project_id, task_id=task_id))
+        # on the project_table create a column for the leader user-email
+        # then the list will add only the users who are assigned
+        # so the if in the table will have one more or for the other column
 
-    return render_template('dashboard/tasks/new.html', project=project, users=users)
+        return redirect(url_for('view_project', user_email=user_email, project_id=project_id, task_id=task_id))
+
+    return render_template('dashboard/tasks/new.html', user_email=user_email, project=project, users=users)
 
 
 # View a project's task
-@app.route('/dashboard/projects/<ObjectId:project_id>/<ObjectId:task_id>', methods=['GET'])
-def view_task(project_id, task_id):
+@app.route('/dashboard/<user_email>/projects/<ObjectId:project_id>/<ObjectId:task_id>', methods=['GET'])
+def view_task(user_email, project_id, task_id):
     # Check if the project and task exists in the db table based on the id
     project = mongo.db.project_table.find_one_or_404({'_id': project_id})
     task = mongo.db.task_table.find_one_or_404({'_id': task_id})
@@ -264,7 +277,8 @@ def view_task(project_id, task_id):
     tasks = mongo.db.task_table.find({}, {"title": 1, "description": 1, "date": 1, "assign_to": 1, "status": 1})
     users = mongo.db.user_table.find({}, {"fullname": 1})
 
-    return render_template('dashboard/tasks/view.html', project=project, task=task, tasks=tasks, users=users)
+    return render_template('dashboard/tasks/view.html', user_email=user_email, project=project, task=task, tasks=tasks,
+                           users=users)
 
 
 # -----> TASKS PAGES AND FUNCTIONS <-----
@@ -274,8 +288,8 @@ def view_task(project_id, task_id):
 # Thus, (from the app.py) project_id=project_id and task_id=task_id <--> project_id=project._id and task_id=task._id (from the html file)
 
 # Update the Project's task details
-@app.route('/dashboard/projects/<ObjectId:project_id>/<ObjectId:task_id>/update', methods=['POST'])
-def update_task(project_id, task_id):
+@app.route('/dashboard/<user_email>/projects/<ObjectId:project_id>/<ObjectId:task_id>/update', methods=['POST'])
+def update_task(user_email, project_id, task_id):
     task_collection = mongo.db.task_table
     task_collection.find_one_and_update({"_id": task_id},
                                         {"$set": {
@@ -287,12 +301,12 @@ def update_task(project_id, task_id):
                                         }
                                         })
 
-    return redirect(url_for('view_project', project_id=project_id))
+    return redirect(url_for('view_project', user_email=user_email, project_id=project_id))
 
 
 # Delete a task
-@app.route('/dashboard/projects/<ObjectId:project_id>/delete/<ObjectId:task_id>', methods=['POST'])
-def delete_task(project_id, task_id):
+@app.route('/dashboard/<user_email>/projects/<ObjectId:project_id>/delete/<ObjectId:task_id>', methods=['POST'])
+def delete_task(user_email, project_id, task_id):
     task_collection = mongo.db.task_table
     cur = mongo.db.task_table.find()
     results = list(cur)
@@ -304,7 +318,7 @@ def delete_task(project_id, task_id):
         task_collection.find_one_and_update({"_id": task_id},
                                             {"$set": {
                                                 "title": "",
-                                                "description": "",
+                                                "description": "First always empty, it will be removed automatically",
                                                 "date": "",
                                                 "assign_to": "",
                                                 "status": ""
@@ -313,7 +327,7 @@ def delete_task(project_id, task_id):
     else:
         task_collection.remove({"_id": task_id})
 
-    return redirect(url_for('view_project', project_id=project_id, task_id=task_id))
+    return redirect(url_for('view_project', user_email=user_email, project_id=project_id, task_id=task_id))
 
 
 # -----> END OF TASKS PAGES AND FUNCTIONS <-----
@@ -322,16 +336,17 @@ def delete_task(project_id, task_id):
 
 # https://www.youtube.com/watch?v=DsgAuceHha4
 # List with all the uploads of the specific project
-@app.route('/dashboard/projects/<ObjectId:project_id>/uploads')
-def upload_table(project_id):
+@app.route('/dashboard/<user_email>/projects/<ObjectId:project_id>/uploads')
+def upload_table(user_email, project_id):
     project = mongo.db.project_table.find_one_or_404({'_id': project_id})
     uploads = mongo.db.upload_table.find({}, {"filename": 1, "project_id": 1})
-    return render_template('dashboard/projects/uploads.html', project=project, project_id=project_id, uploads=uploads)
+    return render_template('dashboard/projects/uploads.html', user_email=user_email, project=project,
+                           project_id=project_id, uploads=uploads)
 
 
 # Add new file in upload_table of the specific project
-@app.route('/dashboard/projects/<ObjectId:project_id>/new_file', methods=['POST'])
-def upload_new_file(project_id):
+@app.route('/dashboard/<user_email>/projects/<ObjectId:project_id>/new_file', methods=['POST'])
+def upload_new_file(user_email, project_id):
     upload_collection = mongo.db.upload_table
     upload = request.files['upload']
     if upload.filename != '':  # avoid to upload empty stuff
@@ -343,14 +358,14 @@ def upload_new_file(project_id):
             }
         )
 
-    return redirect(url_for('upload_table', project_id=project_id))
+    return redirect(url_for('upload_table', user_email=user_email, project_id=project_id))
 
 
 # Download the file from the upload list
-@app.route('/dashboard/projects/<ObjectId:project_id>/uploads/file/<filename>', methods=['GET'])
-def download_file(project_id, filename):
+@app.route('/dashboard/<user_email>/projects/<ObjectId:project_id>/uploads/file/<filename>', methods=['GET'])
+def download_file(user_email, project_id, filename):
     # https://stackoverflow.com/questions/12645505/python-check-if-any-items-of-a-tuple-are-in-a-string
-    valid_file_extensions = ".txt", ".pdf", ".zip", ".rar", ".bmp", ".gif", ".jpg", ".jpeg", ".png"
+    valid_file_extensions = ".pdf", ".zip", ".rar", ".bmp", ".gif", ".jpg", ".jpeg", ".png"
     if not any(str(filename).endswith(s) for s in valid_file_extensions):
 
         dest_dir = os.path.expandvars('%userprofile%/Downloads/task-management-tool/')  # where to place it
@@ -369,15 +384,16 @@ def download_file(project_id, filename):
         output.write(output_data)
         output.close()
 
-        return render_template('dashboard/alert.html', project_id=project_id)
+        return render_template('dashboard/alert.html', user_email=user_email, project_id=project_id)
 
     else:
         return mongo.send_file(filename)
 
 
 # https://stackoverflow.com/questions/21311540/how-to-delete-an-image-file-from-gridfs-by-file-metadata
-@app.route('/dashboard/projects/<ObjectId:project_id>/uploads/delete/<ObjectId:upload_id>', methods=['POST'])
-def delete_file(project_id, upload_id):
+@app.route('/dashboard/<user_email>/projects/<ObjectId:project_id>/uploads/delete/<ObjectId:upload_id>',
+           methods=['POST'])
+def delete_file(user_email, project_id, upload_id):
     # upload_table -- use as foreign_key=id to --> fs.files table -- use as foreign_key=filename to--> fs.chunks table
 
     fs_collection = mongo.db.fs.files  # collect the data of the fs.files table
@@ -396,33 +412,38 @@ def delete_file(project_id, upload_id):
     fs.delete(fs_id)  # delete the file from the fs.files and fs.chunks table
     upload_collection.remove({"_id": upload_id})  # delete the file from the upload_table
 
-    return redirect(url_for('upload_table', project_id=project_id))
+    return redirect(url_for('upload_table', user_email=user_email, project_id=project_id))
 
 
 # -----> END OF FILES LIST PAGES AND FUNCTIONS <-----
 
 # -----> CHARTS TAB PAGES AND FUNCTIONS <-----
 
-@app.route('/dashboard/charts')
-def charts():
+@app.route('/dashboard/<user_email>/charts')
+def charts(user_email):
     months = []  # create an empty list
     # Refresh the list by adding the number of project of each month
     for x in range(1, 13):  # 12 months counting from 1
         # Source: https://stackoverflow.com/a/41157529
         # Source: https://docs.mongodb.com/manual/reference/method/db.collection.count/
         # Create a list of data, find and count the projects which belong to a specific month
-        months.append([mongo.db.project_table.find({'date': {'$regex': "2021-0" + str(x), '$options': 'i'}}).count()])
+        # find({..},{..}) --> one condition, find({... , ...}, {..}) --> two conditions
+        months.append([mongo.db.project_table.find({'project_creator_email': user_email, 'date': {'$regex': "2021-0" + str(x), '$options': 'i'}}).count()])
 
-    project_sum = mongo.db.project_table.find().count()  # calculate the sum of all the projects SHOULD CONSIDER USERID
+    project_sum = mongo.db.project_table.find({'project_creator_email': user_email}).count()  # calculate the sum of all project of the current user
 
     # https://stackoverflow.com/questions/41271299/how-can-i-get-the-first-two-digits-of-a-number
-    status = [float(str((mongo.db.project_table.find({'status': 'Not started'}).count())/project_sum*100)[:4]),
-              float(str((mongo.db.project_table.find({'status': 'In-progress'}).count())/project_sum*100)[:4]),
-              float(str((mongo.db.project_table.find({'status': 'Completed'}).count())/project_sum*100)[:4]),
-              float(str((mongo.db.project_table.find({'status': 'Emergency'}).count())/project_sum*100)[:4])]
+    try:
+        status = [float(str((mongo.db.project_table.find({'project_creator_email': user_email, 'status': 'Not started'}).count()) / project_sum * 100)[:4]),
+                  float(str((mongo.db.project_table.find({'project_creator_email': user_email, 'status': 'In-progress'}).count()) / project_sum * 100)[:4]),
+                  float(str((mongo.db.project_table.find({'project_creator_email': user_email, 'status': 'Completed'}).count()) / project_sum * 100)[:4]),
+                  float(str((mongo.db.project_table.find({'project_creator_email': user_email, 'status': 'Emergency'}).count()) / project_sum * 100)[:4])]
+    except ZeroDivisionError:
+        status = [0, 0, 0, 0]
 
     # render these data to the charts.html which sending the charts data to base.html
-    return render_template('dashboard/charts.html', dataMonth=months, dataStatus=status, project_sum=project_sum)
+    return render_template('dashboard/charts.html', user_email=user_email, dataMonth=months, dataStatus=status,
+                           project_sum=project_sum)
 
 
 # -----> END OF CHART TAB PAGES AND FUNCTIONS <-----
@@ -431,35 +452,36 @@ def charts():
 # -----> TABLE TAB PAGES AND FUNCTIONS <-----
 
 # https://stackoverflow.com/questions/53425222/python-flask-i-want-to-display-the-data-that-present-in-mongodb-on-a-html-page
-@app.route('/dashboard/table')
-def table():
-    projects = mongo.db.project_table.find({}, {"title": 1, "description": 1, "date": 1, "status": 1})
-    return render_template('dashboard/table.html', projects=projects)
+@app.route('/dashboard/<user_email>/table')
+def table(user_email):
+    projects = mongo.db.project_table.find({},
+                                           {"title": 1, "description": 1, "date": 1, "status": 1, "project_creator_email": 1})
+    return render_template('dashboard/table.html', user_email=user_email, projects=projects)
 
 
 # Start project table categories
-@app.route('/dashboard/table/not-started')
-def table_not_started():
-    projects = mongo.db.project_table.find({}, {"title": 1, "description": 1, "date": 1, "status": 1})
-    return render_template('dashboard/categories/notstarted.html', projects=projects)
+@app.route('/dashboard/<user_email>/table/not-started')
+def table_not_started(user_email):
+    projects = mongo.db.project_table.find({}, {"title": 1, "description": 1, "date": 1, "status": 1, "project_creator_email": 1})
+    return render_template('dashboard/categories/notstarted.html', user_email=user_email, projects=projects)
 
 
-@app.route('/dashboard/table/in-progress')
-def table_in_progress():
-    projects = mongo.db.project_table.find({}, {"title": 1, "description": 1, "date": 1, "status": 1})
-    return render_template('dashboard/categories/inprogress.html', projects=projects)
+@app.route('/dashboard/<user_email>/table/in-progress')
+def table_in_progress(user_email):
+    projects = mongo.db.project_table.find({}, {"title": 1, "description": 1, "date": 1, "status": 1, "project_creator_email": 1})
+    return render_template('dashboard/categories/inprogress.html', user_email=user_email, projects=projects)
 
 
-@app.route('/dashboard/table/completed')
-def table_completed():
-    projects = mongo.db.project_table.find({}, {"title": 1, "description": 1, "date": 1, "status": 1})
-    return render_template('dashboard/categories/completed.html', projects=projects)
+@app.route('/dashboard/<user_email>/table/completed')
+def table_completed(user_email):
+    projects = mongo.db.project_table.find({}, {"title": 1, "description": 1, "date": 1, "status": 1, "project_creator_email": 1})
+    return render_template('dashboard/categories/completed.html', user_email=user_email, projects=projects)
 
 
-@app.route('/dashboard/table/emergency')
-def table_emergency():
-    projects = mongo.db.project_table.find({}, {"title": 1, "description": 1, "date": 1, "status": 1})
-    return render_template('dashboard/categories/emergency.html', projects=projects)
+@app.route('/dashboard/<user_email>/table/emergency')
+def table_emergency(user_email):
+    projects = mongo.db.project_table.find({}, {"title": 1, "description": 1, "date": 1, "status": 1, "project_creator_email": 1})
+    return render_template('dashboard/categories/emergency.html', user_email=user_email, projects=projects)
 
 
 # -----> END OF TABLE TAB PAGES FUNCTIONS <-----
