@@ -5,8 +5,11 @@ import gridfs
 from flask import Flask, render_template, request, url_for, session, redirect, flash, jsonify
 from flask_login import LoginManager, login_required, current_user, login_user, logout_user, UserMixin
 from datetime import timedelta
+import re
+from flask import Flask, render_template, request, url_for, session, redirect, flash
 from mongodb_models import settings_mongo
 from bson import ObjectId
+
 import warnings
 from models.users import User
 
@@ -121,9 +124,10 @@ def user_info():
 def dashboard(user_email):
     if "active_user" in session:  # checking if active user exist in the session (cookies)
 
-        # use this variable to check the email who is logged in during a session (remove the comment)
+        # use this variable to check the email who is logged in during a session
         users = mongo.db.user_table.find({}, {"email": 1})
-        projects = mongo.db.project_table.find({}, {"title": 1, "description": 1, "date": 1, "status": 1, "project_creator_email": 1})
+        projects = mongo.db.project_table.find({}, {"title": 1, "description": 1, "date": 1, "status": 1,
+                                                    "project_creator_email": 1})
 
         # CHARTS
         months = []  # create an empty list
@@ -133,16 +137,25 @@ def dashboard(user_email):
             # Source: https://docs.mongodb.com/manual/reference/method/db.collection.count/
             # Create a list of data, find and count the projects which belong to a specific month
             # find({..},{..}) --> one condition, find({... , ...}, {..}) --> two conditions
-            months.append([mongo.db.project_table.find({'project_creator_email': user_email, 'date': {'$regex': "2021-0" + str(x), '$options': 'i'}}).count()])
+            months.append([mongo.db.project_table.find(
+                {'project_creator_email': user_email, 'date': {'$regex': "2021-0" + str(x), '$options': 'i'}}).count()])
 
-        project_sum = mongo.db.project_table.find({'project_creator_email': user_email}).count()  # calculate the sum of all project of the current user
+        project_sum = mongo.db.project_table.find(
+            {'project_creator_email': user_email}).count()  # calculate the sum of all project of the current user
 
         # https://stackoverflow.com/questions/41271299/how-can-i-get-the-first-two-digits-of-a-number
         try:
-            status = [float(str((mongo.db.project_table.find({'project_creator_email': user_email, 'status': 'Not started'}).count()) / project_sum * 100)[:3]),
-                      float(str((mongo.db.project_table.find({'project_creator_email': user_email, 'status': 'In-progress'}).count()) / project_sum * 100)[:3]),
-                      float(str((mongo.db.project_table.find({'project_creator_email': user_email, 'status': 'Completed'}).count()) / project_sum * 100)[:3]),
-                      float(str((mongo.db.project_table.find({'project_creator_email': user_email, 'status': 'Emergency'}).count()) / project_sum * 100)[:3])]
+            status = [float(str((mongo.db.project_table.find(
+                {'project_creator_email': user_email, 'status': 'Not started'}).count()) / project_sum * 100)[:3]),
+                      float(str((mongo.db.project_table.find(
+                          {'project_creator_email': user_email, 'status': 'In-progress'}).count()) / project_sum * 100)[
+                            :3]),
+                      float(str((mongo.db.project_table.find(
+                          {'project_creator_email': user_email, 'status': 'Completed'}).count()) / project_sum * 100)[
+                            :3]),
+                      float(str((mongo.db.project_table.find(
+                          {'project_creator_email': user_email, 'status': 'Emergency'}).count()) / project_sum * 100)[
+                            :3])]
         except ZeroDivisionError:
             status = [0, 0, 0, 0]
 
@@ -293,9 +306,10 @@ def create_new_task(user_email, project_id):
         # delete now the auto-created empty task of this project
         task_collection.remove({'project_id': project_id, 'title': ""})
 
-        # on the project_table create a column for the leader user-email
-        # then the list will add only the users who are assigned
-        # so the if in the table will have one more or for the other column
+        # Keep the email of the assigned user
+        assigned_email = get_assigned_user_email(request.form['task_assign_to'])
+        # create a table with the assigned users of each project task
+        add_assigned_user(assigned_email, project_id, task_id)
 
         return redirect(url_for('view_project', user_email=user_email, project_id=project_id, task_id=task_id))
 
@@ -335,6 +349,10 @@ def update_task(user_email, project_id, task_id):
                                             'status': request.form.get('status')
                                         }
                                         })
+    # Keep the email of the assigned user
+    assigned_email = get_assigned_user_email(request.form.get('assign_to'))
+    # update the assigned user of the specific task (if changed)
+    update_assigned_user(assigned_email, task_id)
 
     return redirect(url_for('view_project', user_email=user_email, project_id=project_id))
 
@@ -343,11 +361,12 @@ def update_task(user_email, project_id, task_id):
 @app.route('/dashboard/<user_email>/projects/<ObjectId:project_id>/delete/<ObjectId:task_id>', methods=['POST'])
 def delete_task(user_email, project_id, task_id):
     task_collection = mongo.db.task_table
-    cur = mongo.db.task_table.find()
+    cur = mongo.db.task_table.find({"project_id": project_id})
     results = list(cur)
 
     # Checking the cursor has at least 1 element
-    # If there is only one task in the table, do not remove it because there will be an issue, just clear it ($unset could be an option)
+    # If there is only one task of the specific project in the table, do not remove it because there will be an issue
+    # just clear it ($unset could be an option)
     # else remove completely the requested task
     if len(results) == 1:
         task_collection.find_one_and_update({"_id": task_id},
@@ -362,10 +381,62 @@ def delete_task(user_email, project_id, task_id):
     else:
         task_collection.remove({"_id": task_id})
 
+    # Do not forget to delete the assigned user from the assigned_table (automatically)
+    delete_assigned_user(task_id)
+
     return redirect(url_for('view_project', user_email=user_email, project_id=project_id, task_id=task_id))
 
 
 # -----> END OF TASKS PAGES AND FUNCTIONS <-----
+
+# -----> ASSIGNED_TABLE FUNCTIONS <-----
+
+# create the assign_table, this will include the assign users of each task
+# and it will be used in order to let the users to see the projects which
+# they did not create but they have been assigned
+def add_assigned_user(email, project_id, task_id):
+    assigned_user_collection = mongo.db.assigned_table
+    assigned_user_collection.insert_one(
+        {
+            'email': email,
+            "task_id": task_id,
+            "project_id": project_id
+        }
+    )
+
+
+# Update the assigned user of the specific task
+def update_assigned_user(email, task_id):
+    assigned_user_collection = mongo.db.assigned_table
+    assigned_user_collection.find_one_and_update(
+        {"task_id": task_id},
+        {"$set": {
+            'email': email
+        }
+        }
+    )
+
+
+# As soon as the task is deleted, this will delete the assigned user from the assigned table
+def delete_assigned_user(task_id):
+    assigned_user_collection = mongo.db.assigned_table
+    assigned_user_collection.remove({"task_id": task_id})
+
+
+# keep the e-mail of the assigned user
+def get_assigned_user_email(fullname):
+    user_email_dict = mongo.db.user_table.find_one({'fullname': fullname},
+                                                   {'email': 1, '_id': 0})  # gives e.g, {'email': georgios@gmail.com')}
+    user_email_string = str(user_email_dict)  # it will be easier to convert the whole dict to a string first
+    user_email_string = user_email_string.replace("'email'", '')  # remove the 'email' substring
+
+    assigned_email_list = re.findall(r"'([^']*)'",
+                                     user_email_string)  # gives a list with e.g, ['georgios@gmail.com']
+
+    return assigned_email_list[0]  # returns e.g, georgios@gmail.com
+
+
+# -----> END OF ASSIGNED_TABLE FUNCTIONS <-----
 
 # -----> FILES LIST PAGES AND FUNCTIONS <-----
 
@@ -403,7 +474,8 @@ def download_file(user_email, project_id, filename):
     valid_file_extensions = ".pdf", ".zip", ".rar", ".bmp", ".gif", ".jpg", ".jpeg", ".png"
     if not any(str(filename).endswith(s) for s in valid_file_extensions):
 
-        dest_dir = os.path.expandvars('%userprofile%/Downloads/task-management-tool/')  # where to place it
+        # where to place the file
+        dest_dir = os.path.expanduser('~/Downloads/task-management-tool/')
         # make the directories (recursively)
         try:
             os.makedirs(dest_dir)
@@ -463,22 +535,33 @@ def charts(user_email):
         # Source: https://docs.mongodb.com/manual/reference/method/db.collection.count/
         # Create a list of data, find and count the projects which belong to a specific month
         # find({..},{..}) --> one condition, find({... , ...}, {..}) --> two conditions
-        months.append([mongo.db.project_table.find({'project_creator_email': user_email, 'date': {'$regex': "2021-0" + str(x), '$options': 'i'}}).count()])
+        months.append([mongo.db.project_table.find(
+            {'project_creator_email': user_email, 'date': {'$regex': "2021-0" + str(x), '$options': 'i'}}).count()])
 
-    project_sum = mongo.db.project_table.find({'project_creator_email': user_email}).count()  # calculate the sum of all project of the current user
+    # calculate the sum of all projects which the current user created
+    personal_projects_sum = mongo.db.project_table.find({'project_creator_email': user_email}).count()
 
     # https://stackoverflow.com/questions/41271299/how-can-i-get-the-first-two-digits-of-a-number
     try:
-        status = [float(str((mongo.db.project_table.find({'project_creator_email': user_email, 'status': 'Not started'}).count()) / project_sum * 100)[:4]),
-                  float(str((mongo.db.project_table.find({'project_creator_email': user_email, 'status': 'In-progress'}).count()) / project_sum * 100)[:4]),
-                  float(str((mongo.db.project_table.find({'project_creator_email': user_email, 'status': 'Completed'}).count()) / project_sum * 100)[:4]),
-                  float(str((mongo.db.project_table.find({'project_creator_email': user_email, 'status': 'Emergency'}).count()) / project_sum * 100)[:4])]
+        status = [float(str((mongo.db.project_table.find(
+            {'project_creator_email': user_email, 'status': 'Not started'}).count()) / personal_projects_sum * 100)[
+                        :4]),
+                  float(str((mongo.db.project_table.find(
+                      {'project_creator_email': user_email,
+                       'status': 'In-progress'}).count()) / personal_projects_sum * 100)[
+                        :4]),
+                  float(str((mongo.db.project_table.find(
+                      {'project_creator_email': user_email,
+                       'status': 'Completed'}).count()) / personal_projects_sum * 100)[:4]),
+                  float(str((mongo.db.project_table.find(
+                      {'project_creator_email': user_email,
+                       'status': 'Emergency'}).count()) / personal_projects_sum * 100)[:4])]
     except ZeroDivisionError:
         status = [0, 0, 0, 0]
 
     # render these data to the charts.html which sending the charts data to base.html
     return render_template('dashboard/charts.html', user_email=user_email, dataMonth=months, dataStatus=status,
-                           project_sum=project_sum)
+                           project_sum=personal_projects_sum)
 
 
 # -----> END OF CHART TAB PAGES AND FUNCTIONS <-----
@@ -489,34 +572,48 @@ def charts(user_email):
 # https://stackoverflow.com/questions/53425222/python-flask-i-want-to-display-the-data-that-present-in-mongodb-on-a-html-page
 @app.route('/dashboard/<user_email>/table')
 def table(user_email):
-    projects = mongo.db.project_table.find({},
-                                           {"title": 1, "description": 1, "date": 1, "status": 1, "project_creator_email": 1})
-    return render_template('dashboard/table.html', user_email=user_email, projects=projects)
+    projects = mongo.db.project_table.find({}, {"title": 1, "description": 1, "date": 1, "status": 1,
+                                                "project_creator_email": 1})
+    assigned_users = mongo.db.assigned_table.find({}, {"email": 1, "project_id": 1})
+    return render_template('dashboard/table.html', user_email=user_email, projects=projects,
+                           assigned_users=assigned_users)
 
 
-# Start project table categories
+# Starting project table categories
 @app.route('/dashboard/<user_email>/table/not-started')
 def table_not_started(user_email):
-    projects = mongo.db.project_table.find({}, {"title": 1, "description": 1, "date": 1, "status": 1, "project_creator_email": 1})
-    return render_template('dashboard/categories/notstarted.html', user_email=user_email, projects=projects)
+    projects = mongo.db.project_table.find({}, {"title": 1, "description": 1, "date": 1, "status": 1,
+                                                "project_creator_email": 1})
+    assigned_users = mongo.db.assigned_table.find({}, {"email": 1, "project_id": 1})
+    return render_template('dashboard/categories/notstarted.html', user_email=user_email, projects=projects,
+                           assigned_users=assigned_users)
 
 
 @app.route('/dashboard/<user_email>/table/in-progress')
 def table_in_progress(user_email):
-    projects = mongo.db.project_table.find({}, {"title": 1, "description": 1, "date": 1, "status": 1, "project_creator_email": 1})
-    return render_template('dashboard/categories/inprogress.html', user_email=user_email, projects=projects)
+    projects = mongo.db.project_table.find({}, {"title": 1, "description": 1, "date": 1, "status": 1,
+                                                "project_creator_email": 1})
+    assigned_users = mongo.db.assigned_table.find({}, {"email": 1, "project_id": 1})
+    return render_template('dashboard/categories/inprogress.html', user_email=user_email, projects=projects,
+                           assigned_users=assigned_users)
 
 
 @app.route('/dashboard/<user_email>/table/completed')
 def table_completed(user_email):
-    projects = mongo.db.project_table.find({}, {"title": 1, "description": 1, "date": 1, "status": 1, "project_creator_email": 1})
-    return render_template('dashboard/categories/completed.html', user_email=user_email, projects=projects)
+    projects = mongo.db.project_table.find({}, {"title": 1, "description": 1, "date": 1, "status": 1,
+                                                "project_creator_email": 1})
+    assigned_users = mongo.db.assigned_table.find({}, {"email": 1, "project_id": 1})
+    return render_template('dashboard/categories/completed.html', user_email=user_email, projects=projects,
+                           assigned_users=assigned_users)
 
 
 @app.route('/dashboard/<user_email>/table/emergency')
 def table_emergency(user_email):
-    projects = mongo.db.project_table.find({}, {"title": 1, "description": 1, "date": 1, "status": 1, "project_creator_email": 1})
-    return render_template('dashboard/categories/emergency.html', user_email=user_email, projects=projects)
+    projects = mongo.db.project_table.find({}, {"title": 1, "description": 1, "date": 1, "status": 1,
+                                                "project_creator_email": 1})
+    assigned_users = mongo.db.assigned_table.find({}, {"email": 1, "project_id": 1})
+    return render_template('dashboard/categories/emergency.html', user_email=user_email, projects=projects,
+                           assigned_users=assigned_users)
 
 
 # -----> END OF TABLE TAB PAGES FUNCTIONS <-----

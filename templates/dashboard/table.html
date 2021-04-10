@@ -20,6 +20,7 @@
                         <th>Description</th>
                         <th>Deadline</th>
                         <th>Status</th>
+                        <th>Project Creator</th>
                         <th>Delete</th>
                     </tr>
                     </thead>
@@ -30,19 +31,24 @@
                         <th></th>
                         <th></th>
                         <th></th>
+                        <th></th>
                     </tr>
                     </tfoot>
                     <tbody>
                     {% for project in projects %}
-                        {% if project['project_creator_email']==user_email %} <!-- show only the projects of the current logged-in user -->
-                        <tr>
-                            <td> <a href="{{ '/dashboard/%s'%user_email + '/projects/%s'%project["_id"] }}"> {{project["title"]}} </a> </td>
-                            <td>{{project["description"]}}</td>
-                            <td>{{project["date"]}}</td>
-                            <td>{{project["status"]}}</td>
-                            <td class="text-center"><button type="submit" class="btn btn-danger" style=height:35px; formaction="{{ url_for('delete_project', project_id=project._id, user_email=user_email) }}"> Delete </button></td>
-                        </tr>
-                        {% endif %}
+                        {% for assigned_user in assigned_users %}
+                            <!-- show only the projects of the current logged-in or assigned user -->
+                            {% if project['project_creator_email']==user_email or (assigned_user['project_id']==project["_id"] and assigned_user['email']==user_email) %}
+                                <tr>
+                                    <td> <a href="{{ '/dashboard/%s'%user_email + '/projects/%s'%project["_id"] }}"> {{project["title"]}} </a> </td>
+                                    <td>{{project["description"]}}</td>
+                                    <td>{{project["date"]}}</td>
+                                    <td>{{project["status"]}}</td>
+                                    <td>{{project["project_creator_email"]}}</td>
+                                    <td class="text-center"><button type="submit" class="btn btn-danger" style=height:35px; formaction="{{ url_for('delete_project', project_id=project._id, user_email=user_email) }}"> Delete </button></td>
+                                </tr>
+                            {% endif %}
+                        {% endfor %}
                     {% endfor %}
                     </tbody>
                 </table>
