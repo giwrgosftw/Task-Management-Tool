@@ -16,6 +16,7 @@
                                 <th>Description</th>
                                 <th>Deadline</th>
                                 <th>Status</th>
+                                <th>Project Creator</th>
                             </tr>
                             </thead>
                             <tfoot>
@@ -24,20 +25,25 @@
                                 <th></th>
                                 <th></th>
                                 <th></th>
+                                <th></th>
                             </tr>
                             </tfoot>
                             <tbody>
                             {% for project in projects %}
-                                {% if project['project_creator_email']==user_email %} <!-- show only the projects of the current logged-in user -->
-                                    {% if project["status"]=="In-progress"%}
-                                        <tr>
-                                            <td> <a href="{{ '/dashboard/%s'%user_email + '/projects/%s'%project["_id"] }}"> {{project["title"]}} </a> </td>
-                                            <td>{{project["description"]}}</td>
-                                            <td>{{project["date"]}}</td>
-                                            <td>{{project["status"]}}</td>
-                                        </tr>
+                                {% for assigned_user in assigned_users %}
+                                    <!-- show only the projects of the current logged-in or assigned user -->
+                                    {% if project['project_creator_email']==user_email or (assigned_user['project_id']==project["_id"] and assigned_user['email']==user_email) %}
+                                        {% if project["status"]=="In-progress"%}
+                                            <tr>
+                                                <td> <a href="{{ '/dashboard/%s'%user_email + '/projects/%s'%project["_id"] }}"> {{project["title"]}} </a> </td>
+                                                <td>{{project["description"]}}</td>
+                                                <td>{{project["date"]}}</td>
+                                                <td>{{project["status"]}}</td>
+                                                <td>{{project["project_creator_email"]}}</td>
+                                            </tr>
+                                        {% endif %}
                                     {% endif %}
-                                {% endif %}
+                                {% endfor %}
                             {% endfor %}
                             </tbody>
                         </table>
