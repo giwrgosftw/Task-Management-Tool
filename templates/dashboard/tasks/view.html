@@ -4,7 +4,7 @@
         <div id="layoutSidenav_content">
             <form method="POST">
                 <div class="card-header">
-                    <a style="margin-right:15px; margin-top: 20px;" class="btn btn-dark btn-sm" href="{{ '/dashboard/projects/%s'%project["_id"]}}" role="button">Go Back</a>
+                    <a style="margin-right:15px; margin-top: 20px;" class="btn btn-dark btn-sm" href="{{ '/dashboard/%s'%user_email + '/projects/%s'%project["_id"]}}" role="button">Go Back</a>
                     <h4 style="margin-left:80px; margin-top: -31px;"> Task ID: {{task._id}} </h4>
                 </div>
                 <div class="card-body">
@@ -49,8 +49,8 @@
 
                     </select>
 
-                    <button style=margin-top:20px; type="submit" class="btn btn-primary" formaction="{{ url_for('update_task', project_id=project._id, task_id=task._id) }}" >Update </button>
-                    <button style=margin-top:20px; type="submit" class="btn btn-danger" formaction="{{ url_for('delete_task', project_id=project._id, task_id=task._id) }}"> Delete </button>
+                    <button style=margin-top:20px; type="submit" class="btn btn-primary" formaction="{{ url_for('update_task', user_email=user_email, project_id=project._id, task_id=task._id) }}" >Update </button>
+                    <button style=margin-top:20px; type="submit" class="btn btn-danger" formaction="{{ url_for('delete_task', user_email=user_email, project_id=project._id, task_id=task._id) }}"> Delete </button>
                 </div>
             </form>
 

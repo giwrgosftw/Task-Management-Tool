@@ -44,9 +44,9 @@
                         </select>
                     </div>
 
-                    <button style=margin-top:12px; type="submit" class="btn btn-primary" formaction="{{ url_for('update_project', project_id=project._id) }}" >Update </button>
-                    <button style=margin-top:12px; type="submit" class="btn btn-danger" formaction="{{ url_for('delete_project', project_id=project._id) }}"> Delete </button>
-                    <a style=margin-top:12px; href="{{ '/dashboard/projects/%s'%project["_id"] + '/uploads' }}" class="btn btn-secondary">Upload / View file(s)</a>
+                    <button style=margin-top:12px; type="submit" class="btn btn-primary" formaction="{{ url_for('update_project', project_id=project._id, user_email=user_email) }}" >Update </button>
+                    <button style=margin-top:12px; type="submit" class="btn btn-danger" formaction="{{ url_for('delete_project', project_id=project._id, user_email=user_email) }}"> Delete </button>
+                    <a style=margin-top:12px; href="{{ '/dashboard/%s'%user_email + '/projects/%s'%project["_id"] + '/uploads' }}" class="btn btn-secondary">Upload / View file(s)</a>
                 </div>
             </form>
 
@@ -55,7 +55,7 @@
                     <!-- https://datatables.net/examples/api/form.html -->
                     <div class="card-body">
                     <div class="table-responsive">
-                        <a href="{{ '/dashboard/projects/%s'%project["_id"] + '/new_task' }}" style=margin-bottom:12px; class="btn btn-success" role="button">Add Task</a>
+                        <a href="{{ '/dashboard/%s'%user_email + '/projects/%s'%project["_id"] + '/new_task' }}" style=margin-bottom:12px; class="btn btn-success" role="button">Add Task</a>
                         <table class="table table-bordered" width="100%" cellspacing="0">
                             <thead>
                             <tr>
@@ -73,13 +73,13 @@
                                 {% if task["project_id"] == project._id%} <!-- we want to display only the tasks which belong to the specific id -->
                                     {% if task["title"] != ""%} <!-- we also want to hide the auto-created empty task -->
                                         <tr>
-                                            <td> <a href="{{ '/dashboard/projects/%s'%project["_id"] + '/%s'%task["_id"] }}"> {{task["title"]}} </a> </td>
+                                            <td> <a href="{{ '/dashboard/%s'%user_email + '/projects/%s'%project["_id"] + '/%s'%task["_id"] }}"> {{task["title"]}} </a> </td>
                                             <td>{{task["description"]}}</td>
                                             <td>{{task["date"]}}</td>
                                             <td>{{task["assign_to"]}}</td>
                                             <td>{{task["status"]}}</td>
-                                            <td class="text-center"><a href="{{ '/dashboard/projects/%s'%project["_id"] + '/%s'%task["_id"] }}" class="btn btn-primary" style=height:35px; role="button">Edit</a></td>
-                                            <td class="text-center"><button type="submit" class="btn btn-danger" style=height:35px; formaction="{{ url_for('delete_task', project_id=project._id, task_id=task._id) }}"> Delete </button></td>
+                                            <td class="text-center"><a href="{{'/dashboard/%s'%user_email + '/projects/%s'%project["_id"] + '/%s'%task["_id"] }}" class="btn btn-primary" style=height:35px; role="button">Edit</a></td>
+                                            <td class="text-center"><button type="submit" class="btn btn-danger" style=height:35px; formaction="{{ url_for('delete_task', project_id=project._id, task_id=task._id, user_email=user_email) }}"> Delete </button></td>
                                         </tr>
                                     {% endif %}
                                 {% endif %}

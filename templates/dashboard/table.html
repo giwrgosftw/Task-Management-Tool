@@ -6,7 +6,7 @@
         <form method="POST">
         <div class="card-header">
             <ol class="breadcrumb mb-4">
-                <li class="breadcrumb-item"><a href="/dashboard">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{{'/dashboard/%s'%user_email}}">Dashboard</a></li>
                 <li class="breadcrumb-item active">Table</li>
             </ol>
             <h5> <i class="fas fa-table mr-1"></i> Your Projects DataTable</h5>
@@ -34,13 +34,15 @@
                     </tfoot>
                     <tbody>
                     {% for project in projects %}
-                    <tr>
-                        <td> <a href="{{ '/dashboard/projects/%s'%project["_id"] }}"> {{project["title"]}} </a> </td>
-                        <td>{{project["description"]}}</td>
-                        <td>{{project["date"]}}</td>
-                        <td>{{project["status"]}}</td>
-                        <td class="text-center"><button type="submit" class="btn btn-danger" style=height:35px; formaction="{{ url_for('delete_project', project_id=project._id) }}"> Delete </button></td>
-                    </tr>
+                        {% if project['project_creator_email']==user_email %} <!-- show only the projects of the current logged-in user -->
+                        <tr>
+                            <td> <a href="{{ '/dashboard/%s'%user_email + '/projects/%s'%project["_id"] }}"> {{project["title"]}} </a> </td>
+                            <td>{{project["description"]}}</td>
+                            <td>{{project["date"]}}</td>
+                            <td>{{project["status"]}}</td>
+                            <td class="text-center"><button type="submit" class="btn btn-danger" style=height:35px; formaction="{{ url_for('delete_project', project_id=project._id, user_email=user_email) }}"> Delete </button></td>
+                        </tr>
+                        {% endif %}
                     {% endfor %}
                     </tbody>
                 </table>

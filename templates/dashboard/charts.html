@@ -1,3 +1,4 @@
+<!--https://flask.palletsprojects.com/en/1.1.x/patterns/templateinheritance/-->
 <!DOCTYPE html>
 <html lang="en">
 
@@ -23,14 +24,14 @@
         <link href="{{ url_for('static', filename='dist/css/styles.css') }}" rel="stylesheet" />
         <link href="https://cdn.datatables.net/1.10.20/css/dataTables.bootstrap4.min.css" rel="stylesheet" crossorigin="anonymous" />
         <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/js/all.min.js" crossorigin="anonymous"></script>
-        <title> {% block title %} {% endblock %} - Task Manager Tool</title>
+        <title> {% block title %} {% endblock %} - Task Management Tool</title>
     {% endblock %}
 </head>
 
 <body class="sb-nav-fixed">
 
 <nav class="sb-topnav navbar navbar-expand navbar-dark bg-dark">
-    <a class="navbar-brand" href="/dashboard">Task Management Tool</a>
+    <a class="navbar-brand" href="{{'/dashboard/%s'%user_email}}">Task Management Tool</a>
     <button class="btn btn-link btn-sm order-1 order-lg-0" id="sidebarToggle" href="#"><i class="fas fa-bars"></i></button>
 
     <!-- Navbar Search-->
@@ -48,8 +49,8 @@
         <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" id="userDropdown" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fas fa-user fa-fw"></i></a>
             <div class="dropdown-menu dropdown-menu-right" aria-labelledby="userDropdown">
-                <a class="dropdown-item" href="/dashboard">Settings</a>
-                <a class="dropdown-item" href="/dashboard">Activity Log</a>
+                <a class="dropdown-item" href="{{'/dashboard/%s'%user_email}}">Settings</a>
+                <a class="dropdown-item" href="{{'/dashboard/%s'%user_email}}">Activity Log</a>
                 <div class="dropdown-divider"></div>
                 <a class="dropdown-item" href="/logout">Logout</a>
             </div>
@@ -64,22 +65,22 @@
             <div class="sb-sidenav-menu">
                 <div class="nav">
                     <div class="sb-sidenav-menu-heading">Core</div>
-                    <a class="nav-link" href="/dashboard">
+                    <a class="nav-link" href="{{'/dashboard/%s'%user_email}}">
                         <div class="sb-nav-link-icon"><i class="fas fa-tachometer-alt"></i></div>
                         Dashboard
                     </a>
 
                     <div class="sb-sidenav-menu-heading">Addons</div>
-                    <a class="nav-link" href="/dashboard/projects/new_project">
+                    <a class="nav-link" href="{{'/dashboard/%s'%user_email}}/projects/new_project">
                         <div class="sb-nav-link-icon"><i class="fas fa-book-open"></i></div>
                         Create New Project
                     </a>
 
-                    <a class="nav-link" href="/dashboard/charts">
+                    <a class="nav-link" href="{{'/dashboard/%s'%user_email}}/charts">
                         <div class="sb-nav-link-icon"><i class="fas fa-chart-area"></i></div>
                         Charts
                     </a>
-                    <a class="nav-link" href="/dashboard/table">
+                    <a class="nav-link" href="{{'/dashboard/%s'%user_email}}/table">
                         <div class="sb-nav-link-icon"><i class="fas fa-table"></i></div>
                         Table
                     </a>
@@ -98,7 +99,7 @@
             <div class="container-fluid" style="margin-bottom: 20px">
                 <h1 class="mt-4">Charts</h1>
                 <ol class="breadcrumb mb-4">
-                    <li class="breadcrumb-item"><a href="/dashboard">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{{'/dashboard/%s'%user_email}}">Dashboard</a></li>
                     <li class="breadcrumb-item active">Charts</li>
                 </ol>
                 <div class="card mb-4" style="width: 70%; margin-left: 170px;">
