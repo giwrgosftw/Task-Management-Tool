@@ -2,19 +2,42 @@ import os
 import webbrowser
 import bcrypt
 import gridfs
-from flask import Flask, render_template, request, url_for, session, redirect, flash
+from flask import Flask, render_template, request, url_for, session, redirect, flash, jsonify
+from flask_login import LoginManager, login_required, current_user, login_user, logout_user, UserMixin
+from datetime import timedelta
 from mongodb_models import settings_mongo
 from bson import ObjectId
 import warnings
+from models.users import User
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 app = Flask(__name__)
 mongo = settings_mongo.config_mongo_db_with_app(app)
 fs = gridfs.GridFS(mongo.db)  # create GridFS instance
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'
 
+
+@login_manager.user_loader
+def load_user(email):
+    #  return User.objects(id=user_id).first()
+    user = mongo.db.users.find_one({'email': email})
+    if not user:
+        return None
+    print(User)
+    return User(user['email'], user['fullname'], user['_id'])
+
+
+# # -----> Before request - Session will last 10 min before user is logged out <-----
+@app.before_request
+def make_session_permanent():
+    session.permanent = True
+    app.permanent_session_lifetime = timedelta(minutes=10)
 
 # # -----> OUTSIDE DASHBOARD PAGES & FUNCTIONS <-----
+
 
 @app.route('/')
 def welcome_login():
@@ -82,7 +105,19 @@ def logout():
 
 # -----> DASHBOARD PAGES <-----
 
+@app.route('/user_info', methods=['POST'])
+def user_info():
+    if current_user.is_authenticated:
+        resp = {"result": 200,
+                "data": current_user.to_json()}
+    else:
+        resp = {"result": 401,
+                "data": {"message": "user no login"}}
+    return jsonify(**resp)
+
+
 @app.route('/dashboard/<user_email>')
+@login_required
 def dashboard(user_email):
     if "active_user" in session:  # checking if active user exist in the session (cookies)
 
