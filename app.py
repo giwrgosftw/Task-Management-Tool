@@ -122,10 +122,12 @@ def dashboard(user_email):
         except ZeroDivisionError:
             status = [0, 0, 0, 0]
 
+        assigned_users = mongo.db.assigned_table.find({}, {"email": 1, "project_id": 1})
+
         # render these data to the home.html which sending the charts data to base.html
         return render_template('dashboard/home.html', users=users, user_email=user_email, projects=projects,
                                project_sum=project_sum, dataMonth=months,
-                               dataStatus=status)  # https://startbootstrap.com/template/sb-admin
+                               dataStatus=status, assigned_users=assigned_users)  # https://startbootstrap.com/template/sb-admin
     else:
         error = 'Invalid credentials'
         print(error)
