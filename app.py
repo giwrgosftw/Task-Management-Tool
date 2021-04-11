@@ -2,8 +2,6 @@ import os
 import webbrowser
 import bcrypt
 import gridfs
-from flask import Flask, render_template, request, url_for, session, redirect, flash, jsonify
-from flask_login import LoginManager, login_required, current_user, login_user, logout_user, UserMixin
 from datetime import timedelta
 import re
 from flask import Flask, render_template, request, url_for, session, redirect, flash
@@ -11,26 +9,12 @@ from mongodb_models import settings_mongo
 from bson import ObjectId
 
 import warnings
-from models.users import User
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 app = Flask(__name__)
 mongo = settings_mongo.config_mongo_db_with_app(app)
 fs = gridfs.GridFS(mongo.db)  # create GridFS instance
-login_manager = LoginManager()
-login_manager.init_app(app)
-login_manager.login_view = 'login'
-
-
-@login_manager.user_loader
-def load_user(email):
-    #  return User.objects(id=user_id).first()
-    user = mongo.db.users.find_one({'email': email})
-    if not user:
-        return None
-    print(User)
-    return User(user['email'], user['fullname'], user['_id'])
 
 
 # # -----> Before request - Session will last 10 min before user is logged out <-----
@@ -107,20 +91,7 @@ def logout():
 
 
 # -----> DASHBOARD PAGES <-----
-
-@app.route('/user_info', methods=['POST'])
-def user_info():
-    if current_user.is_authenticated:
-        resp = {"result": 200,
-                "data": current_user.to_json()}
-    else:
-        resp = {"result": 401,
-                "data": {"message": "user no login"}}
-    return jsonify(**resp)
-
-
 @app.route('/dashboard/<user_email>')
-@login_required
 def dashboard(user_email):
     if "active_user" in session:  # checking if active user exist in the session (cookies)
 
@@ -164,7 +135,7 @@ def dashboard(user_email):
                                project_sum=project_sum, dataMonth=months,
                                dataStatus=status)  # https://startbootstrap.com/template/sb-admin
     else:
-        error = 'Invalid credentials'
+        error = 'You need to login first'
         print(error)
         session.clear()
         flash(u'You need to login', 'error')
@@ -176,110 +147,136 @@ def dashboard(user_email):
 # -----> PROJECTS PAGES AND FUNCTIONS <-----
 @app.route('/dashboard/<user_email>/projects/new_project', methods=['POST', 'GET'])
 def create_new_project(user_email):
-    if request.method == 'POST':
+    if "active_user" in session:  # checking if active user exist in the session (cookies)
+        if request.method == 'POST':
 
-        # https://docs.mongodb.com/manual/reference/database-references/
-        project_id = ObjectId()  # setup the project's id
+            # https://docs.mongodb.com/manual/reference/database-references/
+            project_id = ObjectId()  # setup the project's id
 
-        project_collection = mongo.db.project_table  # project collection (creates the project_table)
-        existing_project = project_collection.find_one(
-            {'title': request.form['project_title']})  # check if the project already exists based on the title
+            project_collection = mongo.db.project_table  # project collection (creates the project_table)
+            existing_project = project_collection.find_one(
+                {'title': request.form['project_title']})  # check if the project already exists based on the title
 
-        if existing_project is None:
-            project_collection.insert_one({"_id": project_id,
-                                           'title': request.form['project_title'],
-                                           'description': request.form['project_description'],
-                                           'date': request.form['project_date'],
-                                           'status': "Not started",
-                                           'project_creator_email': user_email,
-                                           })
-            # As soon as the project is created, the next step will be to add a new empty task to avoid the 404 issue
-            # this will be deleted when the user adds the first task
-            insert_new_empty_task(user_email, project_id)
+            if existing_project is None:
+                project_collection.insert_one({"_id": project_id,
+                                               'title': request.form['project_title'],
+                                               'description': request.form['project_description'],
+                                               'date': request.form['project_date'],
+                                               'status': "Not started",
+                                               'project_creator_email': user_email,
+                                               })
+                # As soon as the project is created, the next step will be to add a new empty task to avoid the 404 issue
+                # this will be deleted when the user adds the first task
+                insert_new_empty_task(user_email, project_id)
 
-            return redirect(url_for('view_project', user_email=user_email, project_id=project_id))
+                return redirect(url_for('view_project', user_email=user_email, project_id=project_id))
 
-        return 'That project already exists!'
-
-    return render_template('dashboard/projects/new.html', user_email=user_email)
+            return 'That project already exists!'
+        return render_template('dashboard/projects/new.html', user_email=user_email)
+    else:
+        error = 'You need to login first'
+        print(error)
+        session.clear()
+        flash(u'You need to login', 'error')
+        return render_template('login.html', error=error)
 
 
 # View a Project
 @app.route('/dashboard/<user_email>/projects/<ObjectId:project_id>', methods=['GET'])
 def view_project(user_email, project_id):
-    # Check if the project exists in the db table based on the id
-    project = mongo.db.project_table.find_one_or_404({'_id': project_id})
-    task = mongo.db.task_table.find_one_or_404({'project_id': project_id})
+    if "active_user" in session:  # checking if active user exist in the session (cookies)
+        # Check if the project exists in the db table based on the id
+        project = mongo.db.project_table.find_one_or_404({'_id': project_id})
+        task = mongo.db.task_table.find_one_or_404({'project_id': project_id})
 
-    # Collect all the variables which we want to display in the project page
-    tasks = mongo.db.task_table.find({}, {"title": 1, "description": 1, "date": 1, "assign_to": 1, "project_id": 1,
-                                          "status": 1})
-    users = mongo.db.user_table.find({}, {"fullname": 1})
+        # Collect all the variables which we want to display in the project page
+        tasks = mongo.db.task_table.find({}, {"title": 1, "description": 1, "date": 1, "assign_to": 1, "project_id": 1,
+                                              "status": 1})
+        users = mongo.db.user_table.find({}, {"fullname": 1})
 
-    return render_template('dashboard/projects/view.html', user_email=user_email, project=project, task=task,
-                           tasks=tasks, users=users)
+        return render_template('dashboard/projects/view.html', user_email=user_email, project=project, task=task,
+                               tasks=tasks, users=users)
+    else:
+        error = 'You need to login first'
+        session.clear()
+        return render_template('login.html', error=error)
 
 
 # Update Project details
 @app.route('/dashboard/<user_email>/projects/update/<ObjectId:project_id>', methods=['POST'])
 def update_project(user_email, project_id):
-    project_collection = mongo.db.project_table
-    project_collection.find_one_and_update({"_id": project_id},
-                                           {"$set": {
-                                               "title": request.form.get('title'),
-                                               "description": request.form.get('description'),
-                                               "date": request.form.get('date'),
-                                               'status': request.form.get('status')
-                                           }
-                                           })
+    if "active_user" in session:  # checking if active user exist in the session (cookies)
+        project_collection = mongo.db.project_table
+        project_collection.find_one_and_update({"_id": project_id},
+                                               {"$set": {
+                                                   "title": request.form.get('title'),
+                                                   "description": request.form.get('description'),
+                                                   "date": request.form.get('date'),
+                                                   'status': request.form.get('status')
+                                               }
+                                               })
 
-    return redirect(url_for('table', user_email=user_email))
+        return redirect(url_for('table', user_email=user_email))
+    else:
+        error = 'You need to login first'
+        session.clear()
+        return render_template('login.html', error=error)
 
 
 # Delete a project
 @app.route('/dashboard/<user_email>/projects/delete/<ObjectId:project_id>', methods=['POST'])
 def delete_project(user_email, project_id):
-    # 1. Delete the uploaded files of the project
-    upload_results = mongo.db.upload_table.find(
-        {"project_id": project_id})  # find the collection of the files which we want to delete based on the project_id
+    if "active_user" in session:  # checking if active user exist in the session (cookies)
+        # 1. Delete the uploaded files of the project
+        upload_results = mongo.db.upload_table.find(
+            {"project_id": project_id})  # find the collection of the files which we want to delete based on the project_id
 
-    for file_document in upload_results:  # iterate all the files which are included in the project that we want to delete
+        for file_document in upload_results:  # iterate all the files which are included in the project that we want to delete
 
-        file_name = file_document[
-            'filename']  # keep the name of the file that we want to delete which exist in the upload_table
-        fs_result = mongo.db.fs.files.find_one({
-            "filename": file_name})  # use the above filename in order to collect the data of the file which we want to delete and also exist in the fs.file table
-        fs_id = fs_result[
-            '_id']  # keep the id of the file that we want to delete which it is also exist in the fs.file table
+            file_name = file_document[
+                'filename']  # keep the name of the file that we want to delete which exist in the upload_table
+            fs_result = mongo.db.fs.files.find_one({
+                "filename": file_name})  # use the above filename in order to collect the data of the file which we want to delete and also exist in the fs.file table
+            fs_id = fs_result[
+                '_id']  # keep the id of the file that we want to delete which it is also exist in the fs.file table
 
-        fs.delete(fs_id)  # delete the file from the fs.files and fs.chunks table
-        mongo.db.upload_table.remove({'project_id': project_id})  # delete the file from the upload_table
+            fs.delete(fs_id)  # delete the file from the fs.files and fs.chunks table
+            mongo.db.upload_table.remove({'project_id': project_id})  # delete the file from the upload_table
 
-    # 2. Delete the tasks of the project
-    mongo.db.project_table.remove({'_id': project_id})  # Delete the project from the database
+        # 2. Delete the tasks of the project
+        mongo.db.project_table.remove({'_id': project_id})  # Delete the project from the database
 
-    # 3. Finally delete the project
-    mongo.db.task_table.remove({'project_id': project_id})  # Delete the project's tasks from the database
+        # 3. Finally delete the project
+        mongo.db.task_table.remove({'project_id': project_id})  # Delete the project's tasks from the database
 
-    return redirect(url_for('table', user_email=user_email))
+        return redirect(url_for('table', user_email=user_email))
+    else:
+        error = 'You need to login first'
+        session.clear()
+        return render_template('login.html', error=error)
 
 
 # Add an empty task in the project's table
 @app.route('/dashboard/<user_email>/projects/<ObjectId:project_id>/new_empty_task', methods=['POST'])
 def insert_new_empty_task(user_email, project_id):
-    task_collection = mongo.db.task_table
-    task_collection.insert_one(
-        {
-            "title": "",
-            "description": "First always empty, it will be removed automatically",
-            "date": "",
-            "project_id": project_id,
-            "assign_to": "",
-            "status": ""
-        }
-    )
+    if "active_user" in session:  # checking if active user exist in the session (cookies)
+        task_collection = mongo.db.task_table
+        task_collection.insert_one(
+            {
+                "title": "",
+                "description": "First always empty, it will be removed automatically",
+                "date": "",
+                "project_id": project_id,
+                "assign_to": "",
+                "status": ""
+            }
+        )
 
-    return redirect(url_for('view_project', user_email=user_email, project_id=project_id))
+        return redirect(url_for('view_project', user_email=user_email, project_id=project_id))
+    else:
+        error = 'You need to login first'
+        session.clear()
+        return render_template('login.html', error=error)
 
 
 # -----> END OF PROJECTS PAGES AND FUNCTIONS<-----
@@ -287,47 +284,57 @@ def insert_new_empty_task(user_email, project_id):
 # Add new task in the project's table
 @app.route('/dashboard/<user_email>/projects/<ObjectId:project_id>/new_task', methods=['POST', 'GET'])
 def create_new_task(user_email, project_id):
-    project = mongo.db.project_table.find_one_or_404({'_id': project_id})
-    users = mongo.db.user_table.find({}, {"fullname": 1})
-    if request.method == 'POST':
-        task_id = ObjectId()
-        task_collection = mongo.db.task_table
-        task_collection.insert_one(
-            {
-                "_id": task_id,
-                'title': request.form['task_title'],
-                'description': request.form['task_description'],
-                'date': request.form['task_date'],
-                "assign_to": request.form['task_assign_to'],
-                "project_id": project_id,
-                "status": "Not started"
-            }
-        )
-        # delete now the auto-created empty task of this project
-        task_collection.remove({'project_id': project_id, 'title': ""})
+    if "active_user" in session:  # checking if active user exist in the session (cookies)
+        project = mongo.db.project_table.find_one_or_404({'_id': project_id})
+        users = mongo.db.user_table.find({}, {"fullname": 1})
+        if request.method == 'POST':
+            task_id = ObjectId()
+            task_collection = mongo.db.task_table
+            task_collection.insert_one(
+                {
+                    "_id": task_id,
+                    'title': request.form['task_title'],
+                    'description': request.form['task_description'],
+                    'date': request.form['task_date'],
+                    "assign_to": request.form['task_assign_to'],
+                    "project_id": project_id,
+                    "status": "Not started"
+                }
+            )
+            # delete now the auto-created empty task of this project
+            task_collection.remove({'project_id': project_id, 'title': ""})
 
-        # Keep the email of the assigned user
-        assigned_email = get_assigned_user_email(request.form['task_assign_to'])
-        # create a table with the assigned users of each project task
-        add_assigned_user(assigned_email, project_id, task_id)
+            # Keep the email of the assigned user
+            assigned_email = get_assigned_user_email(request.form['task_assign_to'])
+            # create a table with the assigned users of each project task
+            add_assigned_user(assigned_email, project_id, task_id)
 
-        return redirect(url_for('view_project', user_email=user_email, project_id=project_id, task_id=task_id))
+            return redirect(url_for('view_project', user_email=user_email, project_id=project_id, task_id=task_id))
 
-    return render_template('dashboard/tasks/new.html', user_email=user_email, project=project, users=users)
+        return render_template('dashboard/tasks/new.html', user_email=user_email, project=project, users=users)
+    else:
+        error = 'You need to login first'
+        session.clear()
+        return render_template('login.html', error=error)
 
 
 # View a project's task
 @app.route('/dashboard/<user_email>/projects/<ObjectId:project_id>/<ObjectId:task_id>', methods=['GET'])
 def view_task(user_email, project_id, task_id):
-    # Check if the project and task exists in the db table based on the id
-    project = mongo.db.project_table.find_one_or_404({'_id': project_id})
-    task = mongo.db.task_table.find_one_or_404({'_id': task_id})
+    if "active_user" in session:  # checking if active user exist in the session (cookies)
+        # Check if the project and task exists in the db table based on the id
+        project = mongo.db.project_table.find_one_or_404({'_id': project_id})
+        task = mongo.db.task_table.find_one_or_404({'_id': task_id})
 
-    tasks = mongo.db.task_table.find({}, {"title": 1, "description": 1, "date": 1, "assign_to": 1, "status": 1})
-    users = mongo.db.user_table.find({}, {"fullname": 1})
+        tasks = mongo.db.task_table.find({}, {"title": 1, "description": 1, "date": 1, "assign_to": 1, "status": 1})
+        users = mongo.db.user_table.find({}, {"fullname": 1})
 
-    return render_template('dashboard/tasks/view.html', user_email=user_email, project=project, task=task, tasks=tasks,
-                           users=users)
+        return render_template('dashboard/tasks/view.html', user_email=user_email, project=project, task=task, tasks=tasks,
+                               users=users)
+    else:
+        error = 'You need to login first'
+        session.clear()
+        return render_template('login.html', error=error)
 
 
 # -----> TASKS PAGES AND FUNCTIONS <-----
@@ -339,53 +346,62 @@ def view_task(user_email, project_id, task_id):
 # Update the Project's task details
 @app.route('/dashboard/<user_email>/projects/<ObjectId:project_id>/<ObjectId:task_id>/update', methods=['POST'])
 def update_task(user_email, project_id, task_id):
-    task_collection = mongo.db.task_table
-    task_collection.find_one_and_update({"_id": task_id},
-                                        {"$set": {
-                                            "title": request.form.get('title'),
-                                            "description": request.form.get('description'),
-                                            "date": request.form.get('date'),
-                                            "assign_to": request.form.get('assign_to'),
-                                            'status': request.form.get('status')
-                                        }
-                                        })
-    # Keep the email of the assigned user
-    assigned_email = get_assigned_user_email(request.form.get('assign_to'))
-    # update the assigned user of the specific task (if changed)
-    update_assigned_user(assigned_email, task_id)
+    if "active_user" in session:  # checking if active user exist in the session (cookies)
+        task_collection = mongo.db.task_table
+        task_collection.find_one_and_update({"_id": task_id},
+                                            {"$set": {
+                                                "title": request.form.get('title'),
+                                                "description": request.form.get('description'),
+                                                "date": request.form.get('date'),
+                                                "assign_to": request.form.get('assign_to'),
+                                                'status': request.form.get('status')
+                                            }
+                                            })
+        # Keep the email of the assigned user
+        assigned_email = get_assigned_user_email(request.form.get('assign_to'))
+        # update the assigned user of the specific task (if changed)
+        update_assigned_user(assigned_email, task_id)
 
-    return redirect(url_for('view_project', user_email=user_email, project_id=project_id))
+        return redirect(url_for('view_project', user_email=user_email, project_id=project_id))
+    else:
+        error = 'You need to login first'
+        session.clear()
+        return render_template('login.html', error=error)
 
 
 # Delete a task
 @app.route('/dashboard/<user_email>/projects/<ObjectId:project_id>/delete/<ObjectId:task_id>', methods=['POST'])
 def delete_task(user_email, project_id, task_id):
-    task_collection = mongo.db.task_table
-    cur = mongo.db.task_table.find({"project_id": project_id})
-    results = list(cur)
+    if "active_user" in session:  # checking if active user exist in the session (cookies)
+        task_collection = mongo.db.task_table
+        cur = mongo.db.task_table.find({"project_id": project_id})
+        results = list(cur)
 
-    # Checking the cursor has at least 1 element
-    # If there is only one task of the specific project in the table, do not remove it because there will be an issue
-    # just clear it ($unset could be an option)
-    # else remove completely the requested task
-    if len(results) == 1:
-        task_collection.find_one_and_update({"_id": task_id},
-                                            {"$set": {
-                                                "title": "",
-                                                "description": "First always empty, it will be removed automatically",
-                                                "date": "",
-                                                "assign_to": "",
-                                                "status": ""
-                                            }
-                                            })
+        # Checking the cursor has at least 1 element
+        # If there is only one task of the specific project in the table, do not remove it because there will be an issue
+        # just clear it ($unset could be an option)
+        # else remove completely the requested task
+        if len(results) == 1:
+            task_collection.find_one_and_update({"_id": task_id},
+                                                {"$set": {
+                                                    "title": "",
+                                                    "description": "First always empty, it will be removed automatically",
+                                                    "date": "",
+                                                    "assign_to": "",
+                                                    "status": ""
+                                                }
+                                                })
+        else:
+            task_collection.remove({"_id": task_id})
+
+        # Do not forget to delete the assigned user from the assigned_table (automatically)
+        delete_assigned_user(task_id)
+
+        return redirect(url_for('view_project', user_email=user_email, project_id=project_id, task_id=task_id))
     else:
-        task_collection.remove({"_id": task_id})
-
-    # Do not forget to delete the assigned user from the assigned_table (automatically)
-    delete_assigned_user(task_id)
-
-    return redirect(url_for('view_project', user_email=user_email, project_id=project_id, task_id=task_id))
-
+        error = 'You need to login first'
+        session.clear()
+        return render_template('login.html', error=error)
 
 # -----> END OF TASKS PAGES AND FUNCTIONS <-----
 
@@ -444,83 +460,102 @@ def get_assigned_user_email(fullname):
 # List with all the uploads of the specific project
 @app.route('/dashboard/<user_email>/projects/<ObjectId:project_id>/uploads')
 def upload_table(user_email, project_id):
-    project = mongo.db.project_table.find_one_or_404({'_id': project_id})
-    uploads = mongo.db.upload_table.find({}, {"filename": 1, "project_id": 1})
-    return render_template('dashboard/projects/uploads.html', user_email=user_email, project=project,
-                           project_id=project_id, uploads=uploads)
+    if "active_user" in session:  # checking if active user exist in the session (cookies)
+        project = mongo.db.project_table.find_one_or_404({'_id': project_id})
+        uploads = mongo.db.upload_table.find({}, {"filename": 1, "project_id": 1})
+        return render_template('dashboard/projects/uploads.html', user_email=user_email, project=project,
+                               project_id=project_id, uploads=uploads)
+    else:
+        error = 'You need to login first'
+        session.clear()
+        return render_template('login.html', error=error)
 
 
 # Add new file in upload_table of the specific project
 @app.route('/dashboard/<user_email>/projects/<ObjectId:project_id>/new_file', methods=['POST'])
 def upload_new_file(user_email, project_id):
-    upload_collection = mongo.db.upload_table
-    upload = request.files['upload']
-    if upload.filename != '':  # avoid to upload empty stuff
-        mongo.save_file(upload.filename, upload)  # default BSON size limit 16MB
-        upload_collection.insert_one(
-            {
-                'filename': upload.filename,
-                'project_id': project_id
-            }
-        )
+    if "active_user" in session:  # checking if active user exist in the session (cookies)
+        upload_collection = mongo.db.upload_table
+        upload = request.files['upload']
+        if upload.filename != '':  # avoid to upload empty stuff
+            mongo.save_file(upload.filename, upload)  # default BSON size limit 16MB
+            upload_collection.insert_one(
+                {
+                    'filename': upload.filename,
+                    'project_id': project_id
+                }
+            )
 
-    return redirect(url_for('upload_table', user_email=user_email, project_id=project_id))
+        return redirect(url_for('upload_table', user_email=user_email, project_id=project_id))
+    else:
+        error = 'You need to login first'
+        session.clear()
+        return render_template('login.html', error=error)
 
 
 # Download the file from the upload list
 @app.route('/dashboard/<user_email>/projects/<ObjectId:project_id>/uploads/file/<filename>', methods=['GET'])
 def download_file(user_email, project_id, filename):
-    # https://stackoverflow.com/questions/12645505/python-check-if-any-items-of-a-tuple-are-in-a-string
-    valid_file_extensions = ".pdf", ".zip", ".rar", ".bmp", ".gif", ".jpg", ".jpeg", ".png"
-    if not any(str(filename).endswith(s) for s in valid_file_extensions):
+    if "active_user" in session:  # checking if active user exist in the session (cookies)
+        # https://stackoverflow.com/questions/12645505/python-check-if-any-items-of-a-tuple-are-in-a-string
+        valid_file_extensions = ".pdf", ".zip", ".rar", ".bmp", ".gif", ".jpg", ".jpeg", ".png"
+        if not any(str(filename).endswith(s) for s in valid_file_extensions):
 
-        # where to place the file
-        dest_dir = os.path.expanduser('~/Downloads/task-management-tool/')
-        # make the directories (recursively)
-        try:
-            os.makedirs(dest_dir)
-        except OSError:  # ignore errors
-            pass
+            # where to place the file
+            dest_dir = os.path.expanduser('~/Downloads/task-management-tool/')
+            # make the directories (recursively)
+            try:
+                os.makedirs(dest_dir)
+            except OSError:  # ignore errors
+                pass
 
-        # https://www.youtube.com/watch?v=KSB5g8qt9io
-        data = mongo.db.fs.files.find_one({'filename': filename})
-        file_id = data['_id']
-        output_data = fs.get(file_id).read()
-        download_location = dest_dir + filename
-        output = open(download_location, "wb")
-        output.write(output_data)
-        output.close()
+            # https://www.youtube.com/watch?v=KSB5g8qt9io
+            data = mongo.db.fs.files.find_one({'filename': filename})
+            file_id = data['_id']
+            output_data = fs.get(file_id).read()
+            download_location = dest_dir + filename
+            output = open(download_location, "wb")
+            output.write(output_data)
+            output.close()
 
-        return render_template('dashboard/alert.html', user_email=user_email, project_id=project_id)
+            return render_template('dashboard/alert.html', user_email=user_email, project_id=project_id)
 
+        else:
+            return mongo.send_file(filename)
     else:
-        return mongo.send_file(filename)
+        error = 'You need to login first'
+        session.clear()
+        return render_template('login.html', error=error)
 
 
 # https://stackoverflow.com/questions/21311540/how-to-delete-an-image-file-from-gridfs-by-file-metadata
 @app.route('/dashboard/<user_email>/projects/<ObjectId:project_id>/uploads/delete/<ObjectId:upload_id>',
            methods=['POST'])
 def delete_file(user_email, project_id, upload_id):
-    # upload_table -- use as foreign_key=id to --> fs.files table -- use as foreign_key=filename to--> fs.chunks table
+    if "active_user" in session:  # checking if active user exist in the session (cookies)
+        # upload_table -- use as foreign_key=id to --> fs.files table -- use as foreign_key=filename to--> fs.chunks table
 
-    fs_collection = mongo.db.fs.files  # collect the data of the fs.files table
-    upload_collection = mongo.db.upload_table  # collect the data of the upload_table
+        fs_collection = mongo.db.fs.files  # collect the data of the fs.files table
+        upload_collection = mongo.db.upload_table  # collect the data of the upload_table
 
-    upload_result = upload_collection.find_one(
-        {"_id": upload_id})  # find the collection of the file which we want to delete based on its id
-    files_name = upload_result[
-        'filename']  # keep the filename of the file that we want to delete which exist in the upload_table
+        upload_result = upload_collection.find_one(
+            {"_id": upload_id})  # find the collection of the file which we want to delete based on its id
+        files_name = upload_result[
+            'filename']  # keep the filename of the file that we want to delete which exist in the upload_table
 
-    fs_result = fs_collection.find_one({
-        "filename": files_name})  # use the above filename in order to collect the data of the file which we want to delete and also exist in the fs.file table
-    fs_id = fs_result[
-        '_id']  # keep the id of the file that we want to delete which it is also exist in the fs.file table
+        fs_result = fs_collection.find_one({
+            "filename": files_name})  # use the above filename in order to collect the data of the file which we want to delete and also exist in the fs.file table
+        fs_id = fs_result[
+            '_id']  # keep the id of the file that we want to delete which it is also exist in the fs.file table
 
-    fs.delete(fs_id)  # delete the file from the fs.files and fs.chunks table
-    upload_collection.remove({"_id": upload_id})  # delete the file from the upload_table
+        fs.delete(fs_id)  # delete the file from the fs.files and fs.chunks table
+        upload_collection.remove({"_id": upload_id})  # delete the file from the upload_table
 
-    return redirect(url_for('upload_table', user_email=user_email, project_id=project_id))
-
+        return redirect(url_for('upload_table', user_email=user_email, project_id=project_id))
+    else:
+        error = 'You need to login first'
+        session.clear()
+        return render_template('login.html', error=error)
 
 # -----> END OF FILES LIST PAGES AND FUNCTIONS <-----
 
@@ -528,40 +563,45 @@ def delete_file(user_email, project_id, upload_id):
 
 @app.route('/dashboard/<user_email>/charts')
 def charts(user_email):
-    months = []  # create an empty list
-    # Refresh the list by adding the number of project of each month
-    for x in range(1, 13):  # 12 months counting from 1
-        # Source: https://stackoverflow.com/a/41157529
-        # Source: https://docs.mongodb.com/manual/reference/method/db.collection.count/
-        # Create a list of data, find and count the projects which belong to a specific month
-        # find({..},{..}) --> one condition, find({... , ...}, {..}) --> two conditions
-        months.append([mongo.db.project_table.find(
-            {'project_creator_email': user_email, 'date': {'$regex': "2021-0" + str(x), '$options': 'i'}}).count()])
+    if "active_user" in session:  # checking if active user exist in the session (cookies)
+        months = []  # create an empty list
+        # Refresh the list by adding the number of project of each month
+        for x in range(1, 13):  # 12 months counting from 1
+            # Source: https://stackoverflow.com/a/41157529
+            # Source: https://docs.mongodb.com/manual/reference/method/db.collection.count/
+            # Create a list of data, find and count the projects which belong to a specific month
+            # find({..},{..}) --> one condition, find({... , ...}, {..}) --> two conditions
+            months.append([mongo.db.project_table.find(
+                {'project_creator_email': user_email, 'date': {'$regex': "2021-0" + str(x), '$options': 'i'}}).count()])
 
-    # calculate the sum of all projects which the current user created
-    personal_projects_sum = mongo.db.project_table.find({'project_creator_email': user_email}).count()
+        # calculate the sum of all projects which the current user created
+        personal_projects_sum = mongo.db.project_table.find({'project_creator_email': user_email}).count()
 
-    # https://stackoverflow.com/questions/41271299/how-can-i-get-the-first-two-digits-of-a-number
-    try:
-        status = [float(str((mongo.db.project_table.find(
-            {'project_creator_email': user_email, 'status': 'Not started'}).count()) / personal_projects_sum * 100)[
-                        :4]),
-                  float(str((mongo.db.project_table.find(
-                      {'project_creator_email': user_email,
-                       'status': 'In-progress'}).count()) / personal_projects_sum * 100)[
-                        :4]),
-                  float(str((mongo.db.project_table.find(
-                      {'project_creator_email': user_email,
-                       'status': 'Completed'}).count()) / personal_projects_sum * 100)[:4]),
-                  float(str((mongo.db.project_table.find(
-                      {'project_creator_email': user_email,
-                       'status': 'Emergency'}).count()) / personal_projects_sum * 100)[:4])]
-    except ZeroDivisionError:
-        status = [0, 0, 0, 0]
+        # https://stackoverflow.com/questions/41271299/how-can-i-get-the-first-two-digits-of-a-number
+        try:
+            status = [float(str((mongo.db.project_table.find(
+                {'project_creator_email': user_email, 'status': 'Not started'}).count()) / personal_projects_sum * 100)[
+                            :4]),
+                      float(str((mongo.db.project_table.find(
+                          {'project_creator_email': user_email,
+                           'status': 'In-progress'}).count()) / personal_projects_sum * 100)[
+                            :4]),
+                      float(str((mongo.db.project_table.find(
+                          {'project_creator_email': user_email,
+                           'status': 'Completed'}).count()) / personal_projects_sum * 100)[:4]),
+                      float(str((mongo.db.project_table.find(
+                          {'project_creator_email': user_email,
+                           'status': 'Emergency'}).count()) / personal_projects_sum * 100)[:4])]
+        except ZeroDivisionError:
+            status = [0, 0, 0, 0]
 
-    # render these data to the charts.html which sending the charts data to base.html
-    return render_template('dashboard/charts.html', user_email=user_email, dataMonth=months, dataStatus=status,
-                           project_sum=personal_projects_sum)
+        # render these data to the charts.html which sending the charts data to base.html
+        return render_template('dashboard/charts.html', user_email=user_email, dataMonth=months, dataStatus=status,
+                               project_sum=personal_projects_sum)
+    else:
+        error = 'You need to login first'
+        session.clear()
+        return render_template('login.html', error=error)
 
 
 # -----> END OF CHART TAB PAGES AND FUNCTIONS <-----
