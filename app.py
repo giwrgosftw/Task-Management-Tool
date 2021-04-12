@@ -137,8 +137,10 @@ def dashboard(user_email):
             except ZeroDivisionError:
                 status = [0, 0, 0, 0]
 
-            assigned_users = list(mongo.db.assigned_table.find({}, {"email": 1, "project_id": 1}))
-
+            assigned_users = list(mongo.db.assigned_table.find({}, {"email": 1, "project_id": 1, "_id": 0}))
+            # remove duplicates: https://stackoverflow.com/a/9427216
+            assigned_users = [dict(t) for t in {tuple(d.items()) for d in assigned_users}]
+            
             # render these data to the home.html which sending the charts data to base.html
             return render_template('dashboard/home.html', users=users, user_email=user_email, projects=projects,
                                    project_sum=project_sum, dataMonth=months,
@@ -687,7 +689,9 @@ def table(user_email):
         if "active_user" in session:  # checking if active user exist in the session (cookies)
             projects = list(mongo.db.project_table.find({}, {"title": 1, "description": 1, "date": 1, "status": 1,
                                                              "project_creator_email": 1}))  # list fixes the assigned_user_list issue
-            assigned_users = list(mongo.db.assigned_table.find({}, {"email": 1, "project_id": 1}))
+            assigned_users = list(mongo.db.assigned_table.find({}, {"email": 1, "project_id": 1, "_id": 0}))
+            # remove duplicates: https://stackoverflow.com/a/9427216
+            assigned_users = [dict(t) for t in {tuple(d.items()) for d in assigned_users}]
             return render_template('dashboard/table.html', user_email=user_email, projects=projects,
                                    assigned_users=assigned_users)
         else:
@@ -705,7 +709,9 @@ def table_not_started(user_email):
         if "active_user" in session:  # checking if active user exist in the session (cookies)
             projects = list(mongo.db.project_table.find({}, {"title": 1, "description": 1, "date": 1, "status": 1,
                                                              "project_creator_email": 1}))
-            assigned_users = list(mongo.db.assigned_table.find({}, {"email": 1, "project_id": 1}))
+            assigned_users = list(mongo.db.assigned_table.find({}, {"email": 1, "project_id": 1, "_id": 0}))
+            # remove duplicates: https://stackoverflow.com/a/9427216
+            assigned_users = [dict(t) for t in {tuple(d.items()) for d in assigned_users}]
             return render_template('dashboard/categories/notstarted.html', user_email=user_email, projects=projects,
                                    assigned_users=assigned_users)
         else:
@@ -722,7 +728,9 @@ def table_in_progress(user_email):
         if "active_user" in session:  # checking if active user exist in the session (cookies)
             projects = list(mongo.db.project_table.find({}, {"title": 1, "description": 1, "date": 1, "status": 1,
                                                              "project_creator_email": 1}))
-            assigned_users = list(mongo.db.assigned_table.find({}, {"email": 1, "project_id": 1}))
+            assigned_users = list(mongo.db.assigned_table.find({}, {"email": 1, "project_id": 1, "_id": 0}))
+            # remove duplicates: https://stackoverflow.com/a/9427216
+            assigned_users = [dict(t) for t in {tuple(d.items()) for d in assigned_users}]
             return render_template('dashboard/categories/inprogress.html', user_email=user_email, projects=projects,
                                    assigned_users=assigned_users)
         error = 'You need to login first'
@@ -738,7 +746,9 @@ def table_completed(user_email):
         if "active_user" in session:  # checking if active user exist in the session (cookies)
             projects = list(mongo.db.project_table.find({}, {"title": 1, "description": 1, "date": 1, "status": 1,
                                                              "project_creator_email": 1}))
-            assigned_users = list(mongo.db.assigned_table.find({}, {"email": 1, "project_id": 1}))
+            assigned_users = list(mongo.db.assigned_table.find({}, {"email": 1, "project_id": 1, "_id": 0}))
+            # remove duplicates: https://stackoverflow.com/a/9427216
+            assigned_users = [dict(t) for t in {tuple(d.items()) for d in assigned_users}]
             return render_template('dashboard/categories/completed.html', user_email=user_email, projects=projects,
                                    assigned_users=assigned_users)
         error = 'You need to login first'
@@ -754,7 +764,9 @@ def table_emergency(user_email):
         if "active_user" in session:  # checking if active user exist in the session (cookies)
             projects = list(mongo.db.project_table.find({}, {"title": 1, "description": 1, "date": 1, "status": 1,
                                                              "project_creator_email": 1}))
-            assigned_users = list(mongo.db.assigned_table.find({}, {"email": 1, "project_id": 1}))
+            assigned_users = list(mongo.db.assigned_table.find({}, {"email": 1, "project_id": 1, "_id": 0}))
+            # remove duplicates: https://stackoverflow.com/a/9427216
+            assigned_users = [dict(t) for t in {tuple(d.items()) for d in assigned_users}]
             return render_template('dashboard/categories/emergency.html', user_email=user_email, projects=projects,
                                    assigned_users=assigned_users)
         else:
