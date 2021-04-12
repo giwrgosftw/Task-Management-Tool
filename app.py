@@ -9,7 +9,6 @@ from mongodb_models import settings_mongo
 from bson import ObjectId
 
 import warnings
-
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 app = Flask(__name__)
@@ -140,7 +139,7 @@ def dashboard(user_email):
             assigned_users = list(mongo.db.assigned_table.find({}, {"email": 1, "project_id": 1, "_id": 0}))
             # remove duplicates: https://stackoverflow.com/a/9427216
             assigned_users = [dict(t) for t in {tuple(d.items()) for d in assigned_users}]
-            
+
             # render these data to the home.html which sending the charts data to base.html
             return render_template('dashboard/home.html', users=users, user_email=user_email, projects=projects,
                                    project_sum=project_sum, dataMonth=months,
