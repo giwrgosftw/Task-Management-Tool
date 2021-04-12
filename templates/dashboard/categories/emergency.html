@@ -30,20 +30,33 @@
                             </tfoot>
                             <tbody>
                             {% for project in projects %}
-                                {% for assigned_user in assigned_users %}
-                                    <!-- show only the projects of the current logged-in or assigned user -->
-                                    {% if project['project_creator_email']==user_email or (assigned_user['project_id']==project["_id"] and assigned_user['email']==user_email) %}
-                                        {% if project["status"]=="Emergency"%}
-                                            <tr>
-                                                <td> <a href="{{ '/dashboard/%s'%user_email + '/projects/%s'%project["_id"] }}"> {{project["title"]}} </a> </td>
-                                                <td>{{project["description"]}}</td>
-                                                <td>{{project["date"]}}</td>
-                                                <td>{{project["status"]}}</td>
-                                                <td>{{project["project_creator_email"]}}</td>
-                                            </tr>
-                                        {% endif %}
+                                <!-- Step 1: check and show only the projects which the current user created -->
+                                {% if project['project_creator_email']==user_email %}
+                                    {% if project["status"]=="Emergency"%}
+                                        <tr>
+                                            <td> <a href="{{ '/dashboard/%s'%user_email + '/projects/%s'%project["_id"] }}"> {{project["title"]}} </a> </td>
+                                            <td>{{project["description"]}}</td>
+                                            <td>{{project["date"]}}</td>
+                                            <td>{{project["status"]}}</td>
+                                            <td>{{project["project_creator_email"]}}</td>
+                                        </tr>
                                     {% endif %}
-                                {% endfor %}
+                                {% else %}
+                                    {% for assigned_user in assigned_users %}
+                                        <!-- Step 2: Check and show also the projects that the current user is assigned -->
+                                        {% if assigned_user['project_id']==project["_id"] and assigned_user['email']==user_email %}
+                                            {% if project["status"]=="Emergency"%}
+                                                <tr>
+                                                    <td> <a href="{{ '/dashboard/%s'%user_email + '/projects/%s'%project["_id"] }}"> {{project["title"]}} </a> </td>
+                                                    <td>{{project["description"]}}</td>
+                                                    <td>{{project["date"]}}</td>
+                                                    <td>{{project["status"]}}</td>
+                                                    <td>{{project["project_creator_email"]}}</td>
+                                                </tr>
+                                            {% endif %}
+                                        {% endif %}
+                                    {% endfor %}
+                                {% endif %}
                             {% endfor %}
                             </tbody>
                         </table>

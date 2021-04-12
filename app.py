@@ -130,10 +130,13 @@ def dashboard(user_email):
         except ZeroDivisionError:
             status = [0, 0, 0, 0]
 
+        assigned_users = mongo.db.assigned_table.find({}, {"email": 1, "project_id": 1})
+
         # render these data to the home.html which sending the charts data to base.html
         return render_template('dashboard/home.html', users=users, user_email=user_email, projects=projects,
                                project_sum=project_sum, dataMonth=months,
-                               dataStatus=status)  # https://startbootstrap.com/template/sb-admin
+                               dataStatus=status,
+                               assigned_users=assigned_users)  # https://startbootstrap.com/template/sb-admin
     else:
         error = 'You need to login first'
         print(error)
@@ -227,7 +230,9 @@ def update_project(user_email, project_id):
 @app.route('/dashboard/<user_email>/projects/delete/<ObjectId:project_id>', methods=['POST'])
 def delete_project(user_email, project_id):
     if "active_user" in session:  # checking if active user exist in the session (cookies)
-        # 1. Delete the uploaded files of the project
+        # 1. Do not forget to delete the assigned users of the project's tasks
+        mongo.db.assigned_table.remove({"project_id": project_id})
+        # 2. Delete the uploaded files of the project
         upload_results = mongo.db.upload_table.find(
             {"project_id": project_id})  # find the collection of the files which we want to delete based on the project_id
 
@@ -243,10 +248,10 @@ def delete_project(user_email, project_id):
             fs.delete(fs_id)  # delete the file from the fs.files and fs.chunks table
             mongo.db.upload_table.remove({'project_id': project_id})  # delete the file from the upload_table
 
-        # 2. Delete the tasks of the project
+        # 3. Delete the tasks of the project
         mongo.db.project_table.remove({'_id': project_id})  # Delete the project from the database
 
-        # 3. Finally delete the project
+        # 4. Finally delete the project
         mongo.db.task_table.remove({'project_id': project_id})  # Delete the project's tasks from the database
 
         return redirect(url_for('table', user_email=user_email))
@@ -377,6 +382,9 @@ def delete_task(user_email, project_id, task_id):
         cur = mongo.db.task_table.find({"project_id": project_id})
         results = list(cur)
 
+        # Do not forget to delete the assigned user from the assigned_table first (automatically)
+        delete_assigned_user(project_id, task_id)
+
         # Checking the cursor has at least 1 element
         # If there is only one task of the specific project in the table, do not remove it because there will be an issue
         # just clear it ($unset could be an option)
@@ -393,10 +401,6 @@ def delete_task(user_email, project_id, task_id):
                                                 })
         else:
             task_collection.remove({"_id": task_id})
-
-        # Do not forget to delete the assigned user from the assigned_table (automatically)
-        delete_assigned_user(task_id)
-
         return redirect(url_for('view_project', user_email=user_email, project_id=project_id, task_id=task_id))
     else:
         error = 'You need to login first'
@@ -434,9 +438,9 @@ def update_assigned_user(email, task_id):
 
 
 # As soon as the task is deleted, this will delete the assigned user from the assigned table
-def delete_assigned_user(task_id):
+def delete_assigned_user(project_id, task_id):
     assigned_user_collection = mongo.db.assigned_table
-    assigned_user_collection.remove({"task_id": task_id})
+    assigned_user_collection.remove({"project_id": project_id, "task_id": task_id})
 
 
 # keep the e-mail of the assigned user
@@ -612,9 +616,9 @@ def charts(user_email):
 # https://stackoverflow.com/questions/53425222/python-flask-i-want-to-display-the-data-that-present-in-mongodb-on-a-html-page
 @app.route('/dashboard/<user_email>/table')
 def table(user_email):
-    projects = mongo.db.project_table.find({}, {"title": 1, "description": 1, "date": 1, "status": 1,
-                                                "project_creator_email": 1})
-    assigned_users = mongo.db.assigned_table.find({}, {"email": 1, "project_id": 1})
+    projects = list(mongo.db.project_table.find({}, {"title": 1, "description": 1, "date": 1, "status": 1,
+                                                "project_creator_email": 1}))  # list fixes the assigned_user_list issue
+    assigned_users = list(mongo.db.assigned_table.find({}, {"email": 1, "project_id": 1}))
     return render_template('dashboard/table.html', user_email=user_email, projects=projects,
                            assigned_users=assigned_users)
 
@@ -622,36 +626,36 @@ def table(user_email):
 # Starting project table categories
 @app.route('/dashboard/<user_email>/table/not-started')
 def table_not_started(user_email):
-    projects = mongo.db.project_table.find({}, {"title": 1, "description": 1, "date": 1, "status": 1,
-                                                "project_creator_email": 1})
-    assigned_users = mongo.db.assigned_table.find({}, {"email": 1, "project_id": 1})
+    projects = list(mongo.db.project_table.find({}, {"title": 1, "description": 1, "date": 1, "status": 1,
+                                                     "project_creator_email": 1}))
+    assigned_users = list(mongo.db.assigned_table.find({}, {"email": 1, "project_id": 1}))
     return render_template('dashboard/categories/notstarted.html', user_email=user_email, projects=projects,
                            assigned_users=assigned_users)
 
 
 @app.route('/dashboard/<user_email>/table/in-progress')
 def table_in_progress(user_email):
-    projects = mongo.db.project_table.find({}, {"title": 1, "description": 1, "date": 1, "status": 1,
-                                                "project_creator_email": 1})
-    assigned_users = mongo.db.assigned_table.find({}, {"email": 1, "project_id": 1})
+    projects = list(mongo.db.project_table.find({}, {"title": 1, "description": 1, "date": 1, "status": 1,
+                                                     "project_creator_email": 1}))
+    assigned_users = list(mongo.db.assigned_table.find({}, {"email": 1, "project_id": 1}))
     return render_template('dashboard/categories/inprogress.html', user_email=user_email, projects=projects,
                            assigned_users=assigned_users)
 
 
 @app.route('/dashboard/<user_email>/table/completed')
 def table_completed(user_email):
-    projects = mongo.db.project_table.find({}, {"title": 1, "description": 1, "date": 1, "status": 1,
-                                                "project_creator_email": 1})
-    assigned_users = mongo.db.assigned_table.find({}, {"email": 1, "project_id": 1})
+    projects = list(mongo.db.project_table.find({}, {"title": 1, "description": 1, "date": 1, "status": 1,
+                                                     "project_creator_email": 1}))
+    assigned_users = list(mongo.db.assigned_table.find({}, {"email": 1, "project_id": 1}))
     return render_template('dashboard/categories/completed.html', user_email=user_email, projects=projects,
                            assigned_users=assigned_users)
 
 
 @app.route('/dashboard/<user_email>/table/emergency')
 def table_emergency(user_email):
-    projects = mongo.db.project_table.find({}, {"title": 1, "description": 1, "date": 1, "status": 1,
-                                                "project_creator_email": 1})
-    assigned_users = mongo.db.assigned_table.find({}, {"email": 1, "project_id": 1})
+    projects = list(mongo.db.project_table.find({}, {"title": 1, "description": 1, "date": 1, "status": 1,
+                                                     "project_creator_email": 1}))
+    assigned_users = list(mongo.db.assigned_table.find({}, {"email": 1, "project_id": 1}))
     return render_template('dashboard/categories/emergency.html', user_email=user_email, projects=projects,
                            assigned_users=assigned_users)
 
