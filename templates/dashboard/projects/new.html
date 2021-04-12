@@ -6,7 +6,7 @@
         <form method="POST" action="{{ url_for('create_new_project', user_email=user_email) }}">
             <div class='container-fluid'>
                 <label style=margin-top:10px; for='project_title'>Project Subject</label> <!-- following the examples of https://getbootstrap.com/docs/4.3/components/forms/ -->
-                <input type='text' id='project_title' name="project_title" class='form-control'/>
+                <input type='text' id='project_title' name="project_title" class='form-control' required/>
             </div>
             <div class="container-fluid">
                 <label style=margin-top:10px; for="project_description">Description</label>
