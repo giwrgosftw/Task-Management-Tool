@@ -69,7 +69,7 @@ def register():
                     {'fullname': request.form['fullname'], 'email': request.form['email'],
                      'password': hash_pass})
                 session['active_session'] = request.form['email']
-                return redirect(url_for('dashboard/alert_register_user.html'))  # account created successfully navigate me to the login page
+                return render_template('dashboard/alert_register_user.html')  # account created successfully navigate me to the login page
             else:
                 error = 'This account already exists!'
         return render_template('register.html', error=error)
