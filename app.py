@@ -69,7 +69,7 @@ def register():
                 {'fullname': request.form['fullname'], 'email': request.form['email'],
                  'password': hash_pass})
             session['active_session'] = request.form['email']
-            return redirect(url_for('welcome_login'))  # account created successfully navigate me to the login page
+            return render_template('dashboard/alert_register_user.html')
         else:
             error = 'This account already exists!'
     return render_template('register.html', error=error)
@@ -616,49 +616,69 @@ def charts(user_email):
 # https://stackoverflow.com/questions/53425222/python-flask-i-want-to-display-the-data-that-present-in-mongodb-on-a-html-page
 @app.route('/dashboard/<user_email>/table')
 def table(user_email):
-    projects = list(mongo.db.project_table.find({}, {"title": 1, "description": 1, "date": 1, "status": 1,
-                                                "project_creator_email": 1}))  # list fixes the assigned_user_list issue
-    assigned_users = list(mongo.db.assigned_table.find({}, {"email": 1, "project_id": 1}))
-    return render_template('dashboard/table.html', user_email=user_email, projects=projects,
-                           assigned_users=assigned_users)
-
+    if "active_user" in session:  # checking if active user exist in the session (cookies)
+        projects = list(mongo.db.project_table.find({}, {"title": 1, "description": 1, "date": 1, "status": 1,
+                                                    "project_creator_email": 1}))  # list fixes the assigned_user_list issue
+        assigned_users = list(mongo.db.assigned_table.find({}, {"email": 1, "project_id": 1}))
+        return render_template('dashboard/table.html', user_email=user_email, projects=projects,
+                               assigned_users=assigned_users)
+    else:
+        error = 'You need to login first'
+        session.clear()
+        return render_template('login.html', error=error)
 
 # Starting project table categories
 @app.route('/dashboard/<user_email>/table/not-started')
 def table_not_started(user_email):
-    projects = list(mongo.db.project_table.find({}, {"title": 1, "description": 1, "date": 1, "status": 1,
-                                                     "project_creator_email": 1}))
-    assigned_users = list(mongo.db.assigned_table.find({}, {"email": 1, "project_id": 1}))
-    return render_template('dashboard/categories/notstarted.html', user_email=user_email, projects=projects,
-                           assigned_users=assigned_users)
-
+    if "active_user" in session:  # checking if active user exist in the session (cookies)
+        projects = list(mongo.db.project_table.find({}, {"title": 1, "description": 1, "date": 1, "status": 1,
+                                                         "project_creator_email": 1}))
+        assigned_users = list(mongo.db.assigned_table.find({}, {"email": 1, "project_id": 1}))
+        return render_template('dashboard/categories/notstarted.html', user_email=user_email, projects=projects,
+                               assigned_users=assigned_users)
+    else:
+        error = 'You need to login first'
+        session.clear()
+        return render_template('login.html', error=error)
 
 @app.route('/dashboard/<user_email>/table/in-progress')
 def table_in_progress(user_email):
-    projects = list(mongo.db.project_table.find({}, {"title": 1, "description": 1, "date": 1, "status": 1,
-                                                     "project_creator_email": 1}))
-    assigned_users = list(mongo.db.assigned_table.find({}, {"email": 1, "project_id": 1}))
-    return render_template('dashboard/categories/inprogress.html', user_email=user_email, projects=projects,
-                           assigned_users=assigned_users)
-
+    if "active_user" in session:  # checking if active user exist in the session (cookies)
+        projects = list(mongo.db.project_table.find({}, {"title": 1, "description": 1, "date": 1, "status": 1,
+                                                         "project_creator_email": 1}))
+        assigned_users = list(mongo.db.assigned_table.find({}, {"email": 1, "project_id": 1}))
+        return render_template('dashboard/categories/inprogress.html', user_email=user_email, projects=projects,
+                               assigned_users=assigned_users)
+    else:
+        error = 'You need to login first'
+        session.clear()
+        return render_template('login.html', error=error)
 
 @app.route('/dashboard/<user_email>/table/completed')
 def table_completed(user_email):
-    projects = list(mongo.db.project_table.find({}, {"title": 1, "description": 1, "date": 1, "status": 1,
-                                                     "project_creator_email": 1}))
-    assigned_users = list(mongo.db.assigned_table.find({}, {"email": 1, "project_id": 1}))
-    return render_template('dashboard/categories/completed.html', user_email=user_email, projects=projects,
-                           assigned_users=assigned_users)
-
+    if "active_user" in session:  # checking if active user exist in the session (cookies)
+        projects = list(mongo.db.project_table.find({}, {"title": 1, "description": 1, "date": 1, "status": 1,
+                                                         "project_creator_email": 1}))
+        assigned_users = list(mongo.db.assigned_table.find({}, {"email": 1, "project_id": 1}))
+        return render_template('dashboard/categories/completed.html', user_email=user_email, projects=projects,
+                               assigned_users=assigned_users)
+    else:
+        error = 'You need to login first'
+        session.clear()
+        return render_template('login.html', error=error)
 
 @app.route('/dashboard/<user_email>/table/emergency')
 def table_emergency(user_email):
-    projects = list(mongo.db.project_table.find({}, {"title": 1, "description": 1, "date": 1, "status": 1,
-                                                     "project_creator_email": 1}))
-    assigned_users = list(mongo.db.assigned_table.find({}, {"email": 1, "project_id": 1}))
-    return render_template('dashboard/categories/emergency.html', user_email=user_email, projects=projects,
-                           assigned_users=assigned_users)
-
+    if "active_user" in session:  # checking if active user exist in the session (cookies)
+        projects = mongo.db.project_table.find({}, {"title": 1, "description": 1, "date": 1, "status": 1,
+                                                    "project_creator_email": 1})
+        assigned_users = mongo.db.assigned_table.find({}, {"email": 1, "project_id": 1})
+        return render_template('dashboard/categories/emergency.html', user_email=user_email, projects=projects,
+                               assigned_users=assigned_users)
+    else:
+        error = 'You need to login first'
+        session.clear()
+        return render_template('login.html', error=error)
 
 # -----> END OF TABLE TAB PAGES FUNCTIONS <-----
 
