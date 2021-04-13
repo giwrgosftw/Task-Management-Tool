@@ -94,7 +94,11 @@ def logout():
 @app.route('/dashboard/<user_email>/view_profile', methods=['POST', 'GET'])
 def view_profile(user_email):
     user_fullname = get_user_email(user_email)
-    return render_template('dashboard/users/view.html', user_email=user_email, user_fullname=user_fullname)
+    user_password = get_user_password(user_email)
+    return render_template('dashboard/users/view.html',
+                           user_email=user_email,
+                           user_fullname=user_fullname,
+                           user_password=user_password)
 
 
 # -----> END OF OUTSIDE DASHBOARD PAGES AND FUNCTIONS <-----
