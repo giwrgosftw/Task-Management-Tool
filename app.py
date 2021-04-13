@@ -9,6 +9,7 @@ from mongodb_models import settings_mongo
 from bson import ObjectId
 
 import warnings
+
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 app = Flask(__name__)
@@ -21,6 +22,7 @@ fs = gridfs.GridFS(mongo.db)  # create GridFS instance
 def make_session_permanent():
     session.permanent = True
     app.permanent_session_lifetime = timedelta(minutes=10)
+
 
 # # -----> OUTSIDE DASHBOARD PAGES & FUNCTIONS <-----
 
@@ -68,7 +70,8 @@ def register():
                     {'fullname': request.form['fullname'], 'email': request.form['email'],
                      'password': hash_pass})
                 session['active_session'] = request.form['email']
-                return render_template('dashboard/alert_register_user.html')  # account created successfully navigate me to the login page
+                return render_template(
+                    'dashboard/alert_register_user.html')  # account created successfully navigate me to the login page
             else:
                 error = 'This account already exists!'
         return render_template('register.html', error=error)
@@ -86,6 +89,12 @@ def forgot_password():
 def logout():
     session.clear()
     return redirect('/')
+
+
+@app.route('/dashboard/<user_email>/view_profile', methods=['POST', 'GET'])
+def view_profile(user_email):
+    user_fullname = get_user_email(user_email)
+    return render_template('dashboard/users/view.html', user_email=user_email, user_fullname=user_fullname)
 
 
 # -----> END OF OUTSIDE DASHBOARD PAGES AND FUNCTIONS <-----
@@ -155,25 +164,7 @@ def dashboard(user_email):
         print("There was an error with the loading process of the dashboard page: %s" % e)
 
 
-@app.route('/dashboard/<user_email>/update_profile', methods=['GET'])
-def update_profile(user_email):#, project_id):
-    try:
-        if "active_user" in session:  # checking if active user exist in the session (cookies)
-            user = mongo.db.user_table.find_one_and_update({"email": user_email},
-                                                   {"$set": {
-                                                       "email": request.form.get('email'),
-                                                       "fullname": request.form.get('fullname'),
-                                                       "password": request.form.get('password'),
-                                                   }
-                                                   })
 
-            return render_template('dashboard/tasks/update_profile.html', user_email=user_email, user=user)
-        else:
-            error = 'You need to login first'
-            session.clear()
-            return render_template('login.html', error=error)
-    except Exception as e:
-        print("There was an error with the update process of the project: %s" % e)
 # -----> END DASHBOARD PAGES <-----
 
 
@@ -226,12 +217,13 @@ def view_project(user_email, project_id):
             task = mongo.db.task_table.find_one_or_404({'project_id': project_id})
 
             # Collect all the variables which we want to display in the project page
-            tasks = mongo.db.task_table.find({}, {"title": 1, "description": 1, "date": 1, "assign_to": 1, "project_id": 1,
-                                                  "status": 1})
+            tasks = mongo.db.task_table.find({},
+                                             {"title": 1, "description": 1, "date": 1, "assign_to": 1, "project_id": 1,
+                                              "status": 1})
             users = mongo.db.user_table.find({}, {"fullname": 1})
 
             return render_template('dashboard/projects/view.html', user_email=user_email, project=project, task=task,
-                               tasks=tasks, users=users)
+                                   tasks=tasks, users=users)
         else:
             error = 'You need to login first'
             session.clear()
@@ -270,7 +262,7 @@ def delete_project(user_email, project_id):  ########## Use this method to delte
     try:
         if "active_user" in session:  # checking if active user exist in the session (cookies)
             # 1. Do not forget to delete the assigned users of the project's tasks
-            mongo.db.assigned_table.remove({"project_id": project_id}) #
+            mongo.db.assigned_table.remove({"project_id": project_id})  #
 
             # 2. Delete the uploaded files of the project
             upload_results = mongo.db.upload_table.find(
@@ -384,7 +376,8 @@ def view_task(user_email, project_id, task_id):
             tasks = mongo.db.task_table.find({}, {"title": 1, "description": 1, "date": 1, "assign_to": 1, "status": 1})
             users = mongo.db.user_table.find({}, {"fullname": 1})
 
-            return render_template('dashboard/tasks/view.html', user_email=user_email, project=project, task=task, tasks=tasks,
+            return render_template('dashboard/tasks/view.html', user_email=user_email, project=project, task=task,
+                                   tasks=tasks,
                                    users=users)
         else:
             error = 'You need to login first'
@@ -512,7 +505,7 @@ def delete_assigned_user(project_id, task_id):
         print("There was an error with the deletion of the assigned user: %s" % e)
 
 
-# keep the e-mail of the assigned user
+# Get the e-mail of the assigned user
 def get_assigned_user_email(fullname):
     try:
         user_email_dict = mongo.db.user_table.find_one({'fullname': fullname},
@@ -663,7 +656,8 @@ def charts(user_email):
                 # Create a list of data, find and count the projects which belong to a specific month
                 # find({..},{..}) --> one condition, find({... , ...}, {..}) --> two conditions
                 months.append([mongo.db.project_table.find(
-                    {'project_creator_email': user_email, 'date': {'$regex': "2021-0" + str(x), '$options': 'i'}}).count()])
+                    {'project_creator_email': user_email,
+                     'date': {'$regex': "2021-0" + str(x), '$options': 'i'}}).count()])
 
             # calculate the sum of all projects which the current user created
             personal_projects_sum = mongo.db.project_table.find({'project_creator_email': user_email}).count()
@@ -671,7 +665,8 @@ def charts(user_email):
             # https://stackoverflow.com/questions/41271299/how-can-i-get-the-first-two-digits-of-a-number
             try:
                 status = [float(str((mongo.db.project_table.find(
-                    {'project_creator_email': user_email, 'status': 'Not started'}).count()) / personal_projects_sum * 100)[
+                    {'project_creator_email': user_email,
+                     'status': 'Not started'}).count()) / personal_projects_sum * 100)[
                                 :4]),
                           float(str((mongo.db.project_table.find(
                               {'project_creator_email': user_email,

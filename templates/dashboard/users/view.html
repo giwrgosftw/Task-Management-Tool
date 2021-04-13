@@ -1,0 +1,41 @@
+{% extends "dashboard/base.html" %}
+{% block content %}
+    <div id="layoutSidenav">
+        <div id="layoutSidenav_content">
+            <form method="POST">
+                <div class="card-header">
+                    <a style="margin-right:15px; margin-top: 20px;" class="btn btn-dark btn-sm" href="{{ '/dashboard/%s'%user_email, user_email, user}}" role="button">Go Back</a>
+                    <h4 style="margin-left:80px; margin-top: -31px;"> Welcome: {{user.fullname}} </h4>
+                </div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label class="small mb-1" for="fullname">Full name</label>
+                        <input value="{{user_fullname}}" class="form-control py-4" id="fullname" name="fullname"  required/>
+                    </div>
+                    <div class="form-group">
+                        <label class="small mb-1" for="email">Email</label>
+                        <input value="{{user_email}}" type="email" class="form-control py-4" id="email" name="email" aria-describedby="emailHelp"  required />
+                    </div>
+                    <div class="form-row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="small mb-1" for="inputPassword">Password</label>
+                                <input title="Must contain at least one number and one uppercase and lowercase letter, and at least 6 or more characters" pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{6,}" class="form-control py-4" id="inputPassword" type="password" name="password" placeholder="Enter password" required/>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="small mb-1" for="inputConfirmPassword">Confirm Password</label>
+                                <input title="Must contain at least one number and one uppercase and lowercase letter, and at least 6 or more characters" pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{6,}" class="form-control py-4" id="inputConfirmPassword" type="password" name="password" placeholder="Confirm password" required/>
+                            </div>
+                        </div>
+                        <button style=margin-top:20px; type="submit" class="btn btn-primary" formaction="{{ url_for('update_profile', user_email=user_email) }}" >Update </button>
+{#                        <button style=margin-top:20px; type="submit" class="btn btn-danger" formaction="{{ url_for('delete_task', user_email=user_email, project_id=project._id, task_id=task._id) }}"> Delete </button>#}
+                    </div>
+                </div>
+            </form>
+
+        </div>
+    </div>
+{% endblock %}
+
