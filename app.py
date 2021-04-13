@@ -152,7 +152,8 @@ def update_profile(user_email):
                         if request.form['email'] != "":  # update it only if the user's name has changed
                             # 2: update the user's e-mail in the project table
                             mongo.db.project_table.find_one_and_update({"project_creator_email": user_email},
-                                                                       {"$set": {"project_creator_email": record['email']}})
+                                                                       {"$set": {
+                                                                           "project_creator_email": record['email']}})
 
                             # 3: update the user's e-mail in the project table
                             mongo.db.assigned_table.find_one_and_update({"email": user_email},
@@ -181,6 +182,52 @@ def update_profile(user_email):
 
     except Exception as e:
         print("There was an error with the update process of the user's profile: %s" % e)
+
+
+# Delete the user
+@app.route('/dashboard/<user_email>/delete_user', methods=['POST'])
+def delete_user(user_email):
+    # Delete all the project's of the user including everything related to it
+    project_collection_list = list(mongo.db.project_table.find({'project_creator_email': user_email}, {'_id': 1}))
+
+    for x in project_collection_list:
+        # we want to take only the substring which is inside the parenthesis (the id)
+        # but it will be easier to convert the whole dict to a string first
+        project_id_string = str(x)
+        # gives '6060530cf082cd618caaad54' and then 6060530cf082cd618caaad54
+        project_id = project_id_string[project_id_string.find("(") + 1:project_id_string.find(")")].replace("'", "")
+        project_id = ObjectId(project_id)
+
+        # 1. Do not forget to delete the assigned users of the project's tasks
+        mongo.db.assigned_table.remove({"project_id": project_id})  #
+
+        # 2. Delete the uploaded files of the project
+        upload_results = mongo.db.upload_table.find(
+            {
+                "project_id": project_id})  # find the collection of the files which we want to delete based on the project_id
+
+        for file_document in upload_results:  # iterate all the files which are included in the project that we want to delete
+
+            file_name = file_document[
+                'filename']  # keep the name of the file that we want to delete which exist in the upload_table
+            fs_result = mongo.db.fs.files.find_one({
+                "filename": file_name})  # use the above filename in order to collect the data of the file which we want to delete and also exist in the fs.file table
+            fs_id = fs_result[
+                '_id']  # keep the id of the file that we want to delete which it is also exist in the fs.file table
+
+            fs.delete(fs_id)  # delete the file from the fs.files and fs.chunks table
+            mongo.db.upload_table.remove({'project_id': project_id})  # delete the file from the upload_table
+
+        # 3. Delete the tasks of the project
+        mongo.db.task_table.remove({'project_id': project_id})  # Delete the project's tasks from the database
+
+        # 4. Delete the project
+        mongo.db.project_table.remove({'_id': project_id})  # Delete the project from the database
+
+    # 5: Delete the user
+    mongo.db.user_table.remove({'email': user_email})
+
+    return redirect(url_for('view_profile', user_email=user_email))
 
 
 # Get the fullname of the user
@@ -397,10 +444,10 @@ def delete_project(user_email, project_id):
                 mongo.db.upload_table.remove({'project_id': project_id})  # delete the file from the upload_table
 
             # 3. Delete the tasks of the project
-            mongo.db.project_table.remove({'_id': project_id})  # Delete the project from the database
+            mongo.db.task_table.remove({'project_id': project_id})  # Delete the project's tasks from the database
 
             # 4. Finally delete the project
-            mongo.db.task_table.remove({'project_id': project_id})  # Delete the project's tasks from the database
+            mongo.db.project_table.remove({'_id': project_id})  # Delete the project from the database
 
             return redirect(url_for('table', user_email=user_email))
         else:
