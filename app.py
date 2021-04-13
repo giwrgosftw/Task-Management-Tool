@@ -76,7 +76,7 @@ def register():
                          'email': request.form['email'],
                          'password': hash_pass})
                     return render_template(
-                        'dashboard/alert_register_user.html')  # account created successfully navigate me to the login page
+                        'dashboard/alertRegisterUser.html')  # account created successfully navigate me to the login page
                 else:
                     error = 'These passwords are not identical!'
             else:
@@ -144,7 +144,8 @@ def update_profile(user_email):
                     # The update cannot be implemented if the record is empty
                     if record:
                         mongo.db.user_table.find_one_and_update({"email": user_email}, {"$set": record})
-                    return redirect(url_for('dashboard', user_email=user_email))
+                    return render_template(
+                        'dashboard/alertUpdateProfile.html', user_email=user_email)  # account created successfully navigate me to the login page
                 else:
                     error = 'These passwords are not identical'
                     return render_template('dashboard/users/view.html', user_email=user_email, error=error)
