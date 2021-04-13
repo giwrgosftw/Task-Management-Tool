@@ -227,8 +227,8 @@ def delete_user(user_email):
     # 5: Delete the user
     mongo.db.user_table.remove({'email': user_email})
 
-    return redirect(url_for('view_profile', user_email=user_email))
-
+    #  return redirect(url_for('view_profile', user_email=user_email))
+    return render_template('dashboard/alertDeleteProfile.html', user_email=user_email)
 
 # Get the fullname of the user
 def get_user_fullname(user_email):
