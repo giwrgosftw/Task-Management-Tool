@@ -155,7 +155,46 @@ def dashboard(user_email):
         print("There was an error with the loading process of the dashboard page: %s" % e)
 
 
+@app.route('/dashboard/<user_email>/update_profile', methods=['GET'])
+def update_profile(user_email):#, project_id):
+    # try:
+    #     if "active_user" in session:  # checking if active user exist in the session (cookies)
+    #         # Check if the project exists in the db table based on the id
+    #         # project = mongo.db.project_table.find_one_or_404({'_id': project_id})
+    #         # task = mongo.db.task_table.find_one_or_404({'project_id': project_id})
+    #
+    #         # Collect all the variables which we want to display in the project page
+    #         # tasks = mongo.db.task_table.find({}, {"title": 1, "description": 1, "date": 1, "assign_to": 1, "project_id": 1,
+    #         #                                       "status": 1})
+    #         users = mongo.db.user_table.find({}, {"fullname": 1, "email": 1, "password": 1})
+    #
+    #         return render_template('dashboard/tasks/update_profile.html', user_email=user_email, project=project, task=task,
+    #                            tasks=tasks, users=users)
+    #     else:
+    #         error = 'You need to login first'
+    #         session.clear()
+    #         return render_template('login.html', error=error)
+    # except Exception as e:
+    #     print("There was an error with the loading process of the project's view: %s" % e)
+    try:
+        if "active_user" in session:  # checking if active user exist in the session (cookies)
+            user = mongo.db.user_table.find_one_and_update({"email": user_email},
+                                                   {"$set": {
+                                                       "email": request.form.get('email'),
+                                                       "fullname": request.form.get('fullname'),
+                                                       "password": request.form.get('password'),
+                                                   }
+                                                   })
+
+            return render_template('dashboard/tasks/update_profile.html', user_email=user_email, user=user)
+        else:
+            error = 'You need to login first'
+            session.clear()
+            return render_template('login.html', error=error)
+    except Exception as e:
+        print("There was an error with the update process of the project: %s" % e)
 # -----> END DASHBOARD PAGES <-----
+
 
 # -----> PROJECTS PAGES AND FUNCTIONS <-----
 @app.route('/dashboard/<user_email>/projects/new_project', methods=['POST', 'GET'])
@@ -194,6 +233,7 @@ def create_new_project(user_email):
             return render_template('login.html', error=error)
     except Exception as e:
         print("There was an error with the creation of a new project: %s" % e)
+
 
 # View a Project
 @app.route('/dashboard/<user_email>/projects/<ObjectId:project_id>', methods=['GET'])
@@ -245,11 +285,11 @@ def update_project(user_email, project_id):
 
 # Delete a project
 @app.route('/dashboard/<user_email>/projects/delete/<ObjectId:project_id>', methods=['POST'])
-def delete_project(user_email, project_id):
+def delete_project(user_email, project_id):  ########## Use this method to delte the user from the projects
     try:
         if "active_user" in session:  # checking if active user exist in the session (cookies)
             # 1. Do not forget to delete the assigned users of the project's tasks
-            mongo.db.assigned_table.remove({"project_id": project_id})
+            mongo.db.assigned_table.remove({"project_id": project_id}) #
 
             # 2. Delete the uploaded files of the project
             upload_results = mongo.db.upload_table.find(
