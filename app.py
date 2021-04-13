@@ -76,7 +76,7 @@ def register():
                          'email': request.form['email'],
                          'password': hash_pass})
                     return render_template(
-                        'dashboard/alert_register_user.html')  # account created successfully navigate me to the login page
+                        'dashboard/alertRegisterUser.html')  # account created successfully navigate me to the login page
                 else:
                     error = 'These passwords are not identical!'
             else:
