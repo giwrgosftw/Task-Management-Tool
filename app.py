@@ -101,6 +101,56 @@ def view_profile(user_email):
                            user_password=user_password)
 
 
+@app.route('/dashboard/<user_email>/update_profile', methods=['POST'])
+def update_profile(user_email):
+    try:
+        # if "active_user" in session:  # checking if active user exist in the session (cookies)
+        #     hash_pass = bcrypt.hashpw(request.form.get['password'].encode('utf-8'), bcrypt.gensalt())
+            mongo.db.user_table.find_one_and_update({"email": user_email},
+                                                    {"$set": {
+                                                        "email": request.form.get('email'),
+                                                        "fullname": request.form.get('fullname'),
+                                                        "password": bcrypt.hashpw(request.form['password'].encode('utf-8'), bcrypt.gensalt())
+                                                    }
+                                                    })
+            return redirect(url_for('dashboard', user_email=user_email))
+        # else:
+        #     error = 'You need to login first'
+        #     session.clear()
+        #     return render_template('login.html', error=error)
+    except Exception as e:
+        print("There was an error with the update process of the update profile: %s" % e)
+
+
+# Get the e-mail of the user
+def get_user_email(user_email):
+    try:
+        user_email_dict = mongo.db.user_table.find_one({'email': user_email},
+                                                       {'fullname': 1,
+                                                        '_id': 0})
+        user_email_string = str(user_email_dict)
+        user_email_string = user_email_string.replace("'fullname'", '')
+
+        user_fullname_list = re.findall(r"'([^']*)'", user_email_string)
+        return user_fullname_list[0]
+    except Exception as e:
+        print("There was an error getting the user's email: %s" % e)
+
+
+# Get the user's password
+def get_user_password(user_email):
+    try:
+        user_email_dict = mongo.db.user_table.find_one({'email': user_email},
+                                                       {'password': 1,
+                                                        '_id': 0})
+        user_email_string = str(user_email_dict)
+        user_email_string = user_email_string.replace("'password'", '')
+
+        user_password_list = re.findall(r"'([^']*)'", user_email_string)
+        return user_password_list[0]
+    except Exception as e:
+        print("There was an error getting the user's password: %s" % e)
+
 # -----> END OF OUTSIDE DASHBOARD PAGES AND FUNCTIONS <-----
 
 
@@ -166,7 +216,6 @@ def dashboard(user_email):
             return render_template('login.html', error=error)
     except Exception as e:
         print("There was an error with the loading process of the dashboard page: %s" % e)
-
 
 
 # -----> END DASHBOARD PAGES <-----
