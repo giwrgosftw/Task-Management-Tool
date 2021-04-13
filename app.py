@@ -125,9 +125,17 @@ def update_profile(user_email):
                     # https://stackoverflow.com/questions/58716927/insert-field-only-if-not-null
                     # This is when the user does not type in any of the page's fields
                     # Simulate your incoming record
-                    record = {"email": request.form.get('email'),
-                              "fullname": request.form.get('fullname'),
-                              "password": bcrypt.hashpw(request.form.get('password').encode('utf-8'), bcrypt.gensalt())}
+                    # As soon as the password will be encoded we do not want to encode an empty password
+                    if request.form['password'] == "":
+                        record = {"email": request.form.get('email'),
+                                  "fullname": request.form.get('fullname'),
+                                  }
+                    else:
+                        record = {"email": request.form.get('email'),
+                                  "fullname": request.form.get('fullname'),
+                                  "password": bcrypt.hashpw(request.form.get('password').encode('utf-8'), bcrypt.gensalt())
+                                  }
+
                     # Remove any empty items
                     for k, v in list(record.items()):
                         if v == '' or v is None:
