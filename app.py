@@ -64,16 +64,23 @@ def register():
         if request.method == 'POST':
             users = mongo.db.user_table
             existing_user = users.find_one({'email': request.form['email']})
+
+            # If there is no other account with the given e-mail
             if existing_user is None:
-                hash_pass = bcrypt.hashpw(request.form['password'].encode('utf-8'), bcrypt.gensalt())
-                users.insert_one(
-                    {'fullname': request.form['fullname'], 'email': request.form['email'],
-                     'password': hash_pass})
-                session['active_session'] = request.form['email']
-                return render_template(
-                    'dashboard/alert_register_user.html')  # account created successfully navigate me to the login page
+
+                # If the input and confirmation password are the same
+                if request.form['password'] == request.form['password2']:
+                    hash_pass = bcrypt.hashpw(request.form['password'].encode('utf-8'), bcrypt.gensalt())
+                    users.insert_one(
+                        {'fullname': request.form['fullname'],
+                         'email': request.form['email'],
+                         'password': hash_pass})
+                    return render_template(
+                        'dashboard/alert_register_user.html')  # account created successfully navigate me to the login page
+                else:
+                    error = 'These passwords are not identical!'
             else:
-                error = 'This account already exists!'
+                error = 'An account already exists with this e-mail address!'
         return render_template('register.html', error=error)
     except Exception as e:
         print("There was an error with the register process: %s" % e)
@@ -104,22 +111,46 @@ def view_profile(user_email):
 @app.route('/dashboard/<user_email>/update_profile', methods=['POST'])
 def update_profile(user_email):
     try:
-        # if "active_user" in session:  # checking if active user exist in the session (cookies)
-        #     hash_pass = bcrypt.hashpw(request.form.get['password'].encode('utf-8'), bcrypt.gensalt())
-            mongo.db.user_table.find_one_and_update({"email": user_email},
-                                                    {"$set": {
-                                                        "email": request.form.get('email'),
-                                                        "fullname": request.form.get('fullname'),
-                                                        "password": bcrypt.hashpw(request.form['password'].encode('utf-8'), bcrypt.gensalt())
-                                                    }
-                                                    })
-            return redirect(url_for('dashboard', user_email=user_email))
-        # else:
-        #     error = 'You need to login first'
-        #     session.clear()
-        #     return render_template('login.html', error=error)
+
+        if "active_user" in session:  # checking if active user exist in the session (cookies)
+
+            users = mongo.db.user_table
+            existing_user = users.find_one({'email': request.form['email']})
+
+            if existing_user is None:
+
+                # If the input and confirmation password are the same
+                if request.form['password'] == request.form['password2']:
+
+                    # https://stackoverflow.com/questions/58716927/insert-field-only-if-not-null
+                    # This is when the user does not type in any of the page's fields
+                    # Simulate your incoming record
+                    record = {"email": request.form.get('email'),
+                              "fullname": request.form.get('fullname'),
+                              "password": bcrypt.hashpw(request.form.get('password').encode('utf-8'), bcrypt.gensalt())}
+                    # Remove any empty items
+                    for k, v in list(record.items()):
+                        if v == '' or v is None:
+                            record.pop(k)
+
+                    # The update cannot be implemented if the record is empty
+                    if record:
+                        mongo.db.user_table.find_one_and_update({"email": user_email}, {"$set": record})
+                    return redirect(url_for('dashboard', user_email=user_email))
+                else:
+                    error = 'These passwords are not identical'
+                    return render_template('dashboard/users/view.html', user_email=user_email, error=error)
+
+            else:
+                error = 'An account already exists with this e-mail address!'
+                return render_template('dashboard/users/view.html', user_email=user_email, error=error)
+        else:
+            error = 'You need to login first'
+            session.clear()
+            return render_template('login.html', error=error)
+
     except Exception as e:
-        print("There was an error with the update process of the update profile: %s" % e)
+        print("There was an error with the update process of the user's profile: %s" % e)
 
 
 # Get the e-mail of the user
@@ -150,6 +181,7 @@ def get_user_password(user_email):
         return user_password_list[0]
     except Exception as e:
         print("There was an error getting the user's password: %s" % e)
+
 
 # -----> END OF OUTSIDE DASHBOARD PAGES AND FUNCTIONS <-----
 
@@ -311,7 +343,7 @@ def update_project(user_email, project_id):
 
 # Delete a project
 @app.route('/dashboard/<user_email>/projects/delete/<ObjectId:project_id>', methods=['POST'])
-def delete_project(user_email, project_id):  ########## Use this method to delte the user from the projects
+def delete_project(user_email, project_id):
     try:
         if "active_user" in session:  # checking if active user exist in the session (cookies)
             # 1. Do not forget to delete the assigned users of the project's tasks
