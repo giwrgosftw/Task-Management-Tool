@@ -157,25 +157,6 @@ def dashboard(user_email):
 
 @app.route('/dashboard/<user_email>/update_profile', methods=['GET'])
 def update_profile(user_email):#, project_id):
-    # try:
-    #     if "active_user" in session:  # checking if active user exist in the session (cookies)
-    #         # Check if the project exists in the db table based on the id
-    #         # project = mongo.db.project_table.find_one_or_404({'_id': project_id})
-    #         # task = mongo.db.task_table.find_one_or_404({'project_id': project_id})
-    #
-    #         # Collect all the variables which we want to display in the project page
-    #         # tasks = mongo.db.task_table.find({}, {"title": 1, "description": 1, "date": 1, "assign_to": 1, "project_id": 1,
-    #         #                                       "status": 1})
-    #         users = mongo.db.user_table.find({}, {"fullname": 1, "email": 1, "password": 1})
-    #
-    #         return render_template('dashboard/tasks/update_profile.html', user_email=user_email, project=project, task=task,
-    #                            tasks=tasks, users=users)
-    #     else:
-    #         error = 'You need to login first'
-    #         session.clear()
-    #         return render_template('login.html', error=error)
-    # except Exception as e:
-    #     print("There was an error with the loading process of the project's view: %s" % e)
     try:
         if "active_user" in session:  # checking if active user exist in the session (cookies)
             user = mongo.db.user_table.find_one_and_update({"email": user_email},
