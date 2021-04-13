@@ -100,7 +100,7 @@ def logout():
 
 @app.route('/dashboard/<user_email>/view_profile', methods=['POST', 'GET'])
 def view_profile(user_email):
-    user_fullname = get_user_email(user_email)
+    user_fullname = get_user_fullname(user_email)
     user_password = get_user_password(user_email)
     return render_template('dashboard/users/view.html',
                            user_email=user_email,
@@ -119,6 +119,8 @@ def update_profile(user_email):
 
             if existing_user is None:
 
+                fullname = get_user_fullname(user_email)
+
                 # If the input and confirmation password are the same
                 if request.form['password'] == request.form['password2']:
 
@@ -133,7 +135,8 @@ def update_profile(user_email):
                     else:
                         record = {"email": request.form.get('email'),
                                   "fullname": request.form.get('fullname'),
-                                  "password": bcrypt.hashpw(request.form.get('password').encode('utf-8'), bcrypt.gensalt())
+                                  "password": bcrypt.hashpw(request.form.get('password').encode('utf-8'),
+                                                            bcrypt.gensalt())
                                   }
 
                     # Remove any empty items
@@ -143,9 +146,27 @@ def update_profile(user_email):
 
                     # The update cannot be implemented if the record is empty
                     if record:
+                        # 1: update the columns of the user in the user_table
                         mongo.db.user_table.find_one_and_update({"email": user_email}, {"$set": record})
+
+                        if request.form['email'] != "":  # update it only if the user's name has changed
+                            # 2: update the user's e-mail in the project table
+                            mongo.db.project_table.find_one_and_update({"project_creator_email": user_email},
+                                                                       {"$set": {"project_creator_email": record['email']}})
+
+                            # 3: update the user's e-mail in the project table
+                            mongo.db.assigned_table.find_one_and_update({"email": user_email},
+                                                                        {"$set": {"email": record['email']}})
+                            user_email = record['email']  # update the user_email for the url
+
+                        # 4: update the user's e-mail in the task table
+                        if request.form['fullname'] != "":  # update it only if the user's name has changed
+                            mongo.db.task_table.find_one_and_update({"assign_to": fullname},
+                                                                    {"$set": {"assign_to": record['fullname']}})
+
                     return render_template(
-                        'dashboard/alertUpdateProfile.html', user_email=user_email)  # account created successfully navigate me to the login page
+                        'dashboard/alertUpdateProfile.html',
+                        user_email=user_email)  # account created successfully navigate me to the login page
                 else:
                     error = 'These passwords are not identical'
                     return render_template('dashboard/users/view.html', user_email=user_email, error=error)
@@ -162,8 +183,8 @@ def update_profile(user_email):
         print("There was an error with the update process of the user's profile: %s" % e)
 
 
-# Get the e-mail of the user
-def get_user_email(user_email):
+# Get the fullname of the user
+def get_user_fullname(user_email):
     try:
         user_email_dict = mongo.db.user_table.find_one({'email': user_email},
                                                        {'fullname': 1,
