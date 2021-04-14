@@ -50,7 +50,7 @@ projects_list = [
         'project_creator_email': "georgios@gmail.com",
     },
     {
-        '_id': ObjectId(),
+        '_id': ObjectId('666f6f2d6261722d71757578'),
         'title': "Cloud computing project",
         'description': "The purpose of the project is to develop your own Cloud application. To this end you are required to propose and describe the implementation and architecture of it",
         'date': "2021-05-18",
@@ -323,16 +323,16 @@ tasks_list = [
         'description': "Identify resources.",
         'date': "2021-03-31",
         'assign_to': "Georgios Karanasios",
-        'project_id': ObjectId('6076d80927a0905c0adac6a5'),  # this changes
+        'project_id': ObjectId('666f6f2d6261722d71757578'),  # Cloud computing project
         'status': "Completed",
     },
     {
-        '_id': ObjectId('6076d504c8a4bd3f6594aa92'),
+        '_id': ObjectId('6076d504c8a4bd3f6594aa92'),  # Cloud computing project
         'title': "Design",
         'description': "UML diagrams",
         'date': "2021-04-11",
         'assign_to': "Richard Guaman",
-        'project_id': ObjectId('6076d80927a0905c0adac6a5'),  # this changes
+        'project_id': ObjectId('6076d80927a0905c0adac6a5'),  # Cloud computing project
         'status': "Completed",
     },
     {
@@ -341,7 +341,7 @@ tasks_list = [
         'description': "Coding Backend and Frontend",
         'date': "2021-04-25",
         'assign_to': "Georgios Karanasios",
-        'project_id': ObjectId('6076d80927a0905c0adac6a5'),  # this changes
+        'project_id': ObjectId('6076d80927a0905c0adac6a5'),  # Cloud computing project
         'status': "In-progress",
     },
     {
@@ -350,7 +350,7 @@ tasks_list = [
         'description': "Unit and acceptance testing",
         'date': "2021-05-05",
         'assign_to': "Richard Guaman",
-        'project_id': ObjectId('6076d80927a0905c0adac6a5'),  # this changes
+        'project_id': ObjectId('6076d80927a0905c0adac6a5'),  # Cloud computing project
         'status': "Not started",
     },
 ]
