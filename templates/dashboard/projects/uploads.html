@@ -33,7 +33,7 @@
                             {% for upload in uploads %}
                                 {% if upload["project_id"] == project._id%}
                                 <tr>
-                                    <td> <a href="{{ url_for('download_file', project_id=project._id, filename=upload["filename"], user_email=user_email ) }}"> {{upload["filename"]}} </a></td>
+                                    <td> <a href="{{ url_for('download_file', project_id=project._id, filename=upload["filename"], user_email=user_email ) }}" target="_blank"> {{upload["filename"]}} </a></td>
                                     <td style="width:150px; text-align: center;"> <button style=margin-top:10px; type="submit" class="btn btn-danger" formaction= "{{ url_for('delete_file', project_id=project._id, upload_id=upload._id, user_email=user_email) }}"> Delete </button></td>
                                 </tr>
                                 {% endif %}
