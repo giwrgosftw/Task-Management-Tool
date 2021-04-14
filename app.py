@@ -139,7 +139,7 @@ def update_profile(user_email):
                                                             bcrypt.gensalt())
                                   }
 
-                    # Remove any empty items
+                    # Remove any empty items (this is when the user left everything empty)
                     for k, v in list(record.items()):
                         if v == '' or v is None:
                             record.pop(k)
