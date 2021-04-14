@@ -1,5 +1,5 @@
 # UNDER CONSTRUCTION
-
+from bson import ObjectId
 from mongodb_models import settings_mongo
 from flask import Flask
 import warnings
@@ -10,7 +10,7 @@ mongo = settings_mongo.config_mongo_db_with_app(test_app)
 
 projects_list = [
     {
-        '_id': 1,
+        '_id': ObjectId(),
         'title': "Dissertation Part 1",
         'description': "This project is a substantial piece of individual work to solve a problem in computing. It must be performed autonomously. Expected to take 450 hours of work. It is important that you put in this total amount of effort to able to receive a successful outcome",
         'date': "2021-04-12",
@@ -18,7 +18,7 @@ projects_list = [
         'project_creator_email': "georgios@gmail.com",
     },
     {
-        '_id': 2,
+        '_id': ObjectId(),
         'title': "Dissertation Part 2",
         'description': "This project is a substantial piece of individual work to solve a problem in computing. It must be performed autonomously. Expected to take 450 hours of work. It is important that you put in this total amount of effort to able to receive a successful outcome",
         'date': "2021-04-08",
@@ -26,7 +26,7 @@ projects_list = [
         'project_creator_email': "georgios@gmail.com",
     },
     {
-        '_id': 3,
+        '_id': ObjectId(),
         'title': "Dissertation Part 3",
         'description': "This project is a substantial piece of individual work to solve a problem in computing. It must be performed autonomously. Expected to take 450 hours of work. It is important that you put in this total amount of effort to able to receive a successful outcome",
         'date': "2021-04-14",
@@ -34,7 +34,7 @@ projects_list = [
         'project_creator_email': "georgios@gmail.com",
     },
     {
-        '_id': 4,
+        '_id': ObjectId(),
         'title': "Dissertation Part 3",
         'description': "This project is a substantial piece of individual work to solve a problem in computing. It must be performed autonomously. Expected to take 450 hours of work. It is important that you put in this total amount of effort to able to receive a successful outcome",
         'date': "2021-04-30",
@@ -42,7 +42,7 @@ projects_list = [
         'project_creator_email': "georgios@gmail.com",
     },
     {
-        '_id': 5,
+        '_id': ObjectId(),
         'title': "Coursework presentation",
         'description': "Prepare a PowerPoint presentation",
         'date': "2021-05-12",
@@ -50,7 +50,7 @@ projects_list = [
         'project_creator_email': "georgios@gmail.com",
     },
     {
-        '_id': 6,
+        '_id': ObjectId('666f6f2d6261722d71757578'),
         'title': "Cloud computing project",
         'description': "The purpose of the project is to develop your own Cloud application. To this end you are required to propose and describe the implementation and architecture of it",
         'date': "2021-05-18",
@@ -58,7 +58,7 @@ projects_list = [
         'project_creator_email': "georgios@gmail.com",
     },
     {
-        '_id': 7,
+        '_id': ObjectId(),
         'title': "Fix Nick's laptop",
         'description': "Nick's laptop seems to be very slow. We need to take a look and fix the problem before the end of the month",
         'date': "2021-05-30",
@@ -66,7 +66,7 @@ projects_list = [
         'project_creator_email': "georgios@gmail.com",
     },
     {
-        '_id': 8,
+        '_id': ObjectId(),
         'title': "Fix Maria's laptop",
         'description': "Maria's laptop seems to be very slow. We need to take a look and fix the problem before the end of the month",
         'date': "2021-05-30",
@@ -74,7 +74,7 @@ projects_list = [
         'project_creator_email': "georgios@gmail.com",
     },
     {
-        '_id': 9,
+        '_id': ObjectId(),
         'title': "Fix Petro's laptop",
         'description': "Petro's laptop seems to be very slow. We need to take a look and fix the problem before the end of the month",
         'date': "2021-06-30",
@@ -82,7 +82,7 @@ projects_list = [
         'project_creator_email': "georgios@gmail.com",
     },
     {
-        '_id': 10,
+        '_id': ObjectId(),
         'title': "Fix Richard's laptop",
         'description': "Richard's laptop seems to be very slow. We need to take a look and fix the problem before the end of the month",
         'date': "2021-07-30",
@@ -90,7 +90,7 @@ projects_list = [
         'project_creator_email': "georgios@gmail.com",
     },
     {
-        '_id': 11,
+        '_id': ObjectId(),
         'title': "Fix Nick's laptop",
         'description': "Nick's laptop seems to be very slow. We need to take a look and fix the problem before the end of the month",
         'date': "2021-07-30",
@@ -98,7 +98,7 @@ projects_list = [
         'project_creator_email': "georgios@gmail.com",
     },
     {
-        '_id': 12,
+        '_id': ObjectId(),
         'title': "Fix Georgios's laptop",
         'description': "Georgios's laptop seems to be very slow. We need to take a look and fix the problem before the end of the month",
         'date': "2021-08-30",
@@ -106,7 +106,7 @@ projects_list = [
         'project_creator_email': "georgios@gmail.com",
     },
     {
-        '_id': 13,
+        '_id': ObjectId(),
         'title': "Fix Eleni's laptop",
         'description': "Eleni's laptop seems to be very slow. We need to take a look and fix the problem before the end of the month",
         'date': "2021-08-30",
@@ -114,7 +114,7 @@ projects_list = [
         'project_creator_email': "georgios@gmail.com",
     },
     {
-        '_id': 14,
+        '_id': ObjectId(),
         'title': "Fix Mike's laptop",
         'description': "Mike's laptop seems to be very slow. We need to take a look and fix the problem before the end of the month",
         'date': "2021-09-30",
@@ -122,7 +122,7 @@ projects_list = [
         'project_creator_email': "georgios@gmail.com",
     },
     {
-        '_id': 15,
+        '_id': ObjectId(),
         'title': "Fix Williams's laptop",
         'description': "Williams's laptop seems to be very slow. We need to take a look and fix the problem before the end of the month",
         'date': "2021-09-30",
@@ -130,7 +130,7 @@ projects_list = [
         'project_creator_email': "georgios@gmail.com",
     },
     {
-        '_id': 16,
+        '_id': ObjectId(),
         'title': "Fix Mark's laptop",
         'description': "Mark's laptop seems to be very slow. We need to take a look and fix the problem before the end of the month",
         'date': "2021-09-30",
@@ -138,7 +138,7 @@ projects_list = [
         'project_creator_email': "georgios@gmail.com",
     },
     {
-        '_id': 17,
+        '_id': ObjectId(),
         'title': "Fix Emmanuel's laptop",
         'description': "Emmanuel's laptop seems to be very slow. We need to take a look and fix the problem before the end of the month",
         'date': "2021-09-30",
@@ -146,7 +146,7 @@ projects_list = [
         'project_creator_email': "georgios@gmail.com",
     },
     {
-        '_id': 18,
+        '_id': ObjectId(),
         'title': "Fix Nikol's laptop",
         'description': "Nikol's laptop seems to be very slow. We need to take a look and fix the problem before the end of the month",
         'date': "2021-09-30",
@@ -155,7 +155,7 @@ projects_list = [
     },
 
     {
-        '_id': 19,
+        '_id': ObjectId(),
         'title': "Fix Alexis laptop",
         'description': "Alexis laptop seems to be very slow. We need to take a look and fix the problem before the end of the month",
         'date': "2021-04-30",
@@ -163,7 +163,7 @@ projects_list = [
         'project_creator_email': "georgios@gmail.com",
     },
     {
-        '_id': 20,
+        '_id': ObjectId(),
         'title': "Fix Dias laptop",
         'description': "Dias laptop seems to be very slow. We need to take a look and fix the problem before the end of the month",
         'date': "2021-04-30",
@@ -171,7 +171,7 @@ projects_list = [
         'project_creator_email': "georgios@gmail.com",
     },
     {
-        '_id': 21,
+        '_id': ObjectId(),
         'title': "Fix Theo laptop",
         'description': "Theo laptop seems to be very slow. We need to take a look and fix the problem before the end of the month",
         'date': "2021-04-30",
@@ -179,7 +179,7 @@ projects_list = [
         'project_creator_email': "georgios@gmail.com",
     },
     {
-        '_id': 22,
+        '_id': ObjectId(),
         'title': "Fix Ioanna laptop",
         'description': "Ioanna laptop seems to be very slow. We need to take a look and fix the problem before the end of the month",
         'date': "2021-04-30",
@@ -187,7 +187,7 @@ projects_list = [
         'project_creator_email': "georgios@gmail.com",
     },
     {
-        '_id': 23,
+        '_id': ObjectId(),
         'title': "Fix Bill laptop",
         'description': "Bill laptop seems to be very slow. We need to take a look and fix the problem before the end of the month",
         'date': "2021-05-30",
@@ -195,7 +195,7 @@ projects_list = [
         'project_creator_email': "georgios@gmail.com",
     },
     {
-        '_id': 24,
+        '_id': ObjectId(),
         'title': "Fix User1 laptop",
         'description': "User1 laptop seems to be very slow. We need to take a look and fix the problem before the end of the month",
         'date': "2021-05-30",
@@ -203,7 +203,7 @@ projects_list = [
         'project_creator_email': "georgios@gmail.com",
     },
     {
-        '_id': 25,
+        '_id': ObjectId(),
         'title': "Fix User2 laptop",
         'description': "User2 laptop seems to be very slow. We need to take a look and fix the problem before the end of the month",
         'date': "2021-05-30",
@@ -211,7 +211,7 @@ projects_list = [
         'project_creator_email': "georgios@gmail.com",
     },
     {
-        '_id': 26,
+        '_id': ObjectId(),
         'title': "Fix User3 laptop",
         'description': "User3 laptop seems to be very slow. We need to take a look and fix the problem before the end of the month",
         'date': "2021-06-30",
@@ -219,7 +219,7 @@ projects_list = [
         'project_creator_email': "georgios@gmail.com",
     },
     {
-        '_id': 27,
+        '_id': ObjectId(),
         'title': "Fix User4 laptop",
         'description': "User4 laptop seems to be very slow. We need to take a look and fix the problem before the end of the month",
         'date': "2021-06-30",
@@ -227,7 +227,7 @@ projects_list = [
         'project_creator_email': "georgios@gmail.com",
     },
     {
-        '_id': 28,
+        '_id': ObjectId(),
         'title': "Fix User5 laptop",
         'description': "User5 laptop seems to be very slow. We need to take a look and fix the problem before the end of the month",
         'date': "2021-06-30",
@@ -235,7 +235,7 @@ projects_list = [
         'project_creator_email': "georgios@gmail.com",
     },
     {
-        '_id': 29,
+        '_id': ObjectId(),
         'title': "Fix User6 laptop",
         'description': "User6 laptop seems to be very slow. We need to take a look and fix the problem before the end of the month",
         'date': "2021-07-30",
@@ -243,7 +243,7 @@ projects_list = [
         'project_creator_email': "georgios@gmail.com",
     },
     {
-        '_id': 30,
+        '_id': ObjectId(),
         'title': "Fix User7 laptop",
         'description': "User7 laptop seems to be very slow. We need to take a look and fix the problem before the end of the month",
         'date': "2021-07-30",
@@ -251,7 +251,7 @@ projects_list = [
         'project_creator_email': "georgios@gmail.com",
     },
     {
-        '_id': 31,
+        '_id': ObjectId(),
         'title': "Fix User8 laptop",
         'description': "User8 laptop seems to be very slow. We need to take a look and fix the problem before the end of the month",
         'date': "2021-07-30",
@@ -259,7 +259,7 @@ projects_list = [
         'project_creator_email': "georgios@gmail.com",
     },
     {
-        '_id': 32,
+        '_id': ObjectId(),
         'title': "Fix User9 laptop",
         'description': "User9 laptop seems to be very slow. We need to take a look and fix the problem before the end of the month",
         'date': "2021-09-30",
@@ -267,7 +267,7 @@ projects_list = [
         'project_creator_email': "georgios@gmail.com",
     },
     {
-        '_id': 33,
+        '_id': ObjectId(),
         'title': "Fix User10 laptop",
         'description': "User10 laptop seems to be very slow. We need to take a look and fix the problem before the end of the month",
         'date': "2021-09-30",
@@ -275,7 +275,7 @@ projects_list = [
         'project_creator_email': "georgios@gmail.com",
     },
     {
-        '_id': 34,
+        '_id': ObjectId(),
         'title': "Fix User11 laptop",
         'description': "User11 laptop seems to be very slow. We need to take a look and fix the problem before the end of the month",
         'date': "2021-09-30",
@@ -283,7 +283,7 @@ projects_list = [
         'project_creator_email': "georgios@gmail.com",
     },
     {
-        '_id': 35,
+        '_id': ObjectId(),
         'title': "Fix User12 laptop",
         'description': "User12 laptop seems to be very slow. We need to take a look and fix the problem before the end of the month",
         'date': "2021-04-30",
@@ -291,7 +291,7 @@ projects_list = [
         'project_creator_email': "georgios@gmail.com",
     },
     {
-        '_id': 36,
+        '_id': ObjectId(),
         'title': "Fix User13 laptop",
         'description': "User13 laptop seems to be very slow. We need to take a look and fix the problem before the end of the month",
         'date': "2021-04-30",
@@ -299,7 +299,7 @@ projects_list = [
         'project_creator_email': "georgios@gmail.com",
     },
     {
-        '_id': 37,
+        '_id': ObjectId(),
         'title': "Fix User14 laptop",
         'description': "User14 laptop seems to be very slow. We need to take a look and fix the problem before the end of the month",
         'date': "2021-05-30",
@@ -307,7 +307,7 @@ projects_list = [
         'project_creator_email': "georgios@gmail.com",
     },
     {
-        '_id': 38,
+        '_id': ObjectId(),
         'title': "Fix User15 laptop",
         'description': "User15 laptop seems to be very slow. We need to take a look and fix the problem before the end of the month",
         'date': "2021-05-30",
@@ -318,39 +318,39 @@ projects_list = [
 
 tasks_list = [
     {
-        '_id': 1,
+        '_id': ObjectId('6076d504c8a4bd3f6594aa91'),
         'title': "Analysis",
         'description': "Identify resources.",
         'date': "2021-03-31",
         'assign_to': "Georgios Karanasios",
-        'project_id': 1,
+        'project_id': ObjectId('666f6f2d6261722d71757578'),  # Cloud computing project
         'status': "Completed",
     },
     {
-        '_id': 2,
+        '_id': ObjectId('6076d504c8a4bd3f6594aa92'),  # Cloud computing project
         'title': "Design",
         'description': "UML diagrams",
         'date': "2021-04-11",
         'assign_to': "Richard Guaman",
-        'project_id': 1,
+        'project_id': ObjectId('6076d80927a0905c0adac6a5'),  # Cloud computing project
         'status': "Completed",
     },
     {
-        '_id': 3,
+        '_id': ObjectId('6076d504c8a4bd3f6594aa93'),
         'title': "Implementation",
         'description': "Coding Backend and Frontend",
         'date': "2021-04-25",
         'assign_to': "Georgios Karanasios",
-        'project_id': 1,
+        'project_id': ObjectId('6076d80927a0905c0adac6a5'),  # Cloud computing project
         'status': "In-progress",
     },
     {
-        '_id': 4,
+        '_id': ObjectId('6076d504c8a4bd3f6594aa94'),
         'title': "Evaluation",
         'description': "Unit and acceptance testing",
         'date': "2021-05-05",
         'assign_to': "Richard Guaman",
-        'project_id': 1,
+        'project_id': ObjectId('6076d80927a0905c0adac6a5'),  # Cloud computing project
         'status': "Not started",
     },
 ]
