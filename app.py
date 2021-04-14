@@ -76,7 +76,7 @@ def register():
                          'email': request.form['email'],
                          'password': hash_pass})
                     return render_template(
-                        'dashboard/alertRegisterUser.html')  # account created successfully navigate me to the login page
+                        'dashboard/alerts/alertRegisterUser.html')  # account created successfully navigate me to the login page
                 else:
                     error = 'These passwords are not identical!'
             else:
@@ -166,7 +166,7 @@ def update_profile(user_email):
                                                                     {"$set": {"assign_to": record['fullname']}})
 
                     return render_template(
-                        'dashboard/alertUpdateProfile.html',
+                        'dashboard/alerts/alertUpdateProfile.html',
                         user_email=user_email)  # account created successfully navigate me to the login page
                 else:
                     error = 'These passwords are not identical'
@@ -228,7 +228,7 @@ def delete_user(user_email):
     mongo.db.user_table.remove({'email': user_email})
 
     #  return redirect(url_for('view_profile', user_email=user_email))
-    return render_template('dashboard/alertDeleteProfile.html', user_email=user_email)
+    return render_template('dashboard/alerts/alertDeleteProfile.html', user_email=user_email)
 
 # Get the fullname of the user
 def get_user_fullname(user_email):
@@ -758,7 +758,7 @@ def download_file(user_email, project_id, filename):
                 output.write(output_data)
                 output.close()
 
-                return render_template('dashboard/alert.html', user_email=user_email, project_id=project_id)
+                return render_template('dashboard/alerts/alertUploadFile.html', user_email=user_email, project_id=project_id)
 
             else:
                 return mongo.send_file(filename)
