@@ -719,15 +719,17 @@ def upload_new_file(user_email, project_id):
     try:
         if "active_user" in session:  # checking if active user exist in the session (cookies)
             upload_collection = mongo.db.upload_table
-            upload = request.files['upload']
-            if upload.filename != '':  # avoid to upload empty stuff
-                mongo.save_file(upload.filename, upload)  # default BSON size limit 16MB
-                upload_collection.insert_one(
-                    {
-                        'filename': upload.filename,
-                        'project_id': project_id
-                    }
-                )
+
+            if request.files:
+                for upload in request.files.getlist("uploaded_file"):
+                    if upload.filename != '':  # avoid to upload empty stuff
+                        mongo.save_file(upload.filename, upload)  # default BSON size limit 16MB
+                        upload_collection.insert_one(
+                            {
+                                'filename': upload.filename,
+                                'project_id': project_id
+                            }
+                        )
 
             return redirect(url_for('upload_table', user_email=user_email, project_id=project_id))
         else:
