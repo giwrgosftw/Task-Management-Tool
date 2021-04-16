@@ -332,7 +332,7 @@ tasks_list = [
         'description': "UML diagrams",
         'date': "2021-04-11",
         'assign_to': "Richard Guaman",
-        'project_id': ObjectId('6076d80927a0905c0adac6a5'),  # Cloud computing project
+        'project_id': ObjectId('666f6f2d6261722d71757578'),  # Cloud computing project
         'status': "Completed",
     },
     {
@@ -341,7 +341,7 @@ tasks_list = [
         'description': "Coding Backend and Frontend",
         'date': "2021-04-25",
         'assign_to': "Georgios Karanasios",
-        'project_id': ObjectId('6076d80927a0905c0adac6a5'),  # Cloud computing project
+        'project_id': ObjectId('666f6f2d6261722d71757578'),  # Cloud computing project
         'status': "In-progress",
     },
     {
@@ -350,7 +350,7 @@ tasks_list = [
         'description': "Unit and acceptance testing",
         'date': "2021-05-05",
         'assign_to': "Richard Guaman",
-        'project_id': ObjectId('6076d80927a0905c0adac6a5'),  # Cloud computing project
+        'project_id': ObjectId('666f6f2d6261722d71757578'),  # Cloud computing project
         'status': "Not started",
     },
 ]
