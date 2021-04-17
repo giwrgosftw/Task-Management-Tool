@@ -343,14 +343,14 @@ def create_new_project(user_email):
         if "active_user" in session:  # checking if active user exist in the session (cookies)
             if request.method == 'POST':
 
-                # https://docs.mongodb.com/manual/reference/database-references/
-                project_id = ObjectId()  # setup the project's id
-
                 project_collection = mongo.db.project_table  # project collection (creates the project_table)
                 existing_project = project_collection.find_one(
                     {'title': request.form['project_title']})  # check if the project already exists based on the title
 
                 if existing_project is None:
+                    # https://docs.mongodb.com/manual/reference/database-references/
+                    project_id = ObjectId()  # setup the project's id
+
                     project_collection.insert_one({"_id": project_id,
                                                    'title': request.form['project_title'],
                                                    'description': request.form['project_description'],
