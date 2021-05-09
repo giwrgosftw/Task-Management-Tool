@@ -24,3 +24,6 @@ It is written in Python-Flask for the backend, Bootstrap for the frontend, and u
 My virtualenv (venv) folder is not uploaded. So, BEFORE install the "requirements.txt", create a virtual environment using pyCharm on your production server (check here how: https://www.jetbrains.com/help/pycharm/creating-virtual-environment.html)
 
 Also, as soon as you have installed new dependencies, please, update the "requirements.txt" file by typing in the console "pip freeze > requirements.txt".
+
+# Video link
+https://www.youtube.com/watch?v=vWzpESVf4gs
