@@ -1,4 +1,6 @@
 # Task Management Tool - Cloud Computing Project
+**School of Computer Science (BSc) - City University of London 2020-2021**
+
 This web application is a Task Management Tool which aids to assist teams or individuals in managing multiple projects at once. Specifically:
 1. Register/Login account & Manage user account details 
 2. Create/Edit/Delete projects (add a subject, deadline, status etc.)
@@ -25,5 +27,5 @@ My virtualenv (venv) folder is not uploaded. So, BEFORE install the "requirement
 
 Also, as soon as you have installed new dependencies, please, update the "requirements.txt" file by typing in the console "pip freeze > requirements.txt".
 
-# Video link
+# Demo video link
 https://www.youtube.com/watch?v=vWzpESVf4gs
